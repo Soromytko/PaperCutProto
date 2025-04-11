@@ -12,8 +12,6 @@ public class Polygon : MonoBehaviour
         }
     }
 
-    [SerializeField] private Transform _point1;
-    [SerializeField] private Transform _point2;
     [SerializeField] private List<Vector2> _points = new List<Vector2>();
     private bool _hasIntersection = false;
 
@@ -37,12 +35,6 @@ public class Polygon : MonoBehaviour
 
     private void Start()
     {
-        _points.Clear();
-        for (int i = 0; i < transform.childCount; i++)
-        {
-            _points.Add(transform.GetChild(i).position);
-        }
-
         TriangulatePolygon();
     }
 
