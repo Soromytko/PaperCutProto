@@ -4,16 +4,15 @@ using UnityEngine;
 
 public class Scissors : MonoBehaviour
 {
-    [SerializeField] private Transform[] _pp;
-    public Vector3 vo;
-
     [SerializeField] private float _pointDistance = 0.1f;
     [SerializeField] private Transform _cursor;
     [SerializeField] private Cut _cut;
     [SerializeField] private Polygon _polygon;
     [SerializeField] private bool _isIntersection;
+    [SerializeField] private Polygon _polygonPrefab;
 
     private Vector3 _lastCursorPosition;
+
 
     private Vector3 getCursorPosition()
     {
@@ -92,36 +91,11 @@ public class Scissors : MonoBehaviour
                 newPoints.AddRange(_cutPoints);
 
                 List<Vector2> firstPolygonPoints = Slice(_cutPoints);
-                List<Vector2> reverseCutPoints = new List<Vector2>(_cutPoints);
-                reverseCutPoints.Reverse();
-                List<Vector2> secondPolygonPoints = Slice(reverseCutPoints);
-
-                // Vector2 maybePoint = _polygon.Points[(int)_inter[1].y];
-                // int i = (int)_inter[1].x;
-                // if (!IsRight(newPoints[newPoints.Count - 2], newPoints[newPoints.Count - 1], _polygon.Points[i]))
-                // {
-                //     i = (int)_inter[1].y;
-                // }
-
-                // while (i != (int)_inter[0].y)
-                // {
-                //     newPoints.Add(_polygon.Points[i]);
-                //     if (++i == _polygon.Points.Count)
-                //     {
-                //         i = 0;
-                //     }
-                // }
-                
-                // _polygon.Points = newPoints;
-
+                List<Vector2> secondPolygonPoints = Slice(_cutPoints, true);
 
                 _polygon.Points = firstPolygonPoints;
-
-                //Polygon secondPolygon = Instantiate(_polygon);
-                //secondPolygon.Points = secondPolygonPoints;
-
-                //Destroy(_polygon.gameObject);
-                //_polygon = secondPolygon;
+                Polygon secondPolygon = Instantiate(_polygonPrefab);
+                secondPolygon.Points = secondPolygonPoints;
 
                 Reset();
                 return;
@@ -134,25 +108,20 @@ public class Scissors : MonoBehaviour
         }
     }
 
-    private List<Vector2> Slice(List<Vector2> points)
+    private List<Vector2> Slice(List<Vector2> points, bool reverse = false)
     {
         List<Vector2> result = new List<Vector2>();
         result.AddRange(points);
 
-        Vector2 maybePoint = _polygon.Points[(int)_inter[1].y];
-        int i = (int)_inter[1].x;
-        if (!IsRight(result[result.Count - 2], result[result.Count - 1], _polygon.Points[i]))
-        {
-            i = (int)_inter[1].y;
-        }
+        int i = (int)(reverse ? _inter[1].x : _inter[1].y);
+        int targetIndex = (int)(reverse ? _inter[0].x : _inter[0].y);
+        int step = reverse ? -1 : 1;
 
-        while (i != (int)_inter[0].y)
+        while (i != targetIndex)
         {
             result.Add(_polygon.Points[i]);
-            if (++i == _polygon.Points.Count)
-            {
-                i = 0;
-            }
+            i += step;
+            i = (i == _polygon.Points.Count ? 0 : (i < 0 ? _polygon.Points.Count - 1 : i));
         }
 
         return result;
