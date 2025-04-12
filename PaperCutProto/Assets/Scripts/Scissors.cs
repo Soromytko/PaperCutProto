@@ -115,13 +115,24 @@ public class Scissors : MonoBehaviour
 
         int i = (int)(reverse ? _inter[1].x : _inter[1].y);
         int targetIndex = (int)(reverse ? _inter[0].x : _inter[0].y);
-        int step = reverse ? -1 : 1;
 
-        while (i != targetIndex)
+        if (reverse)
         {
-            result.Add(_polygon.Points[i]);
-            i += step;
-            i = (i == _polygon.Points.Count ? 0 : (i < 0 ? _polygon.Points.Count - 1 : i));
+            do
+            {
+                result.Add(_polygon.Points[i]);
+                i--;
+                i = i < 0 ? _polygon.Points.Count - 1 : i;
+            } while(i != targetIndex);
+        }
+        else
+        {
+            while (i != targetIndex)
+            {
+                result.Add(_polygon.Points[i]);
+                i++;
+                i = i >= _polygon.Points.Count ? 0 : i;
+            }
         }
 
         return result;
