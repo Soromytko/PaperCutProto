@@ -5,27 +5,32 @@ using UnityEngine;
 [RequireComponent(typeof(MeshRenderer))]
 public class PolygonRasterizer : MonoBehaviour
 {
-    public List<Vector2> Points {
+    public List<Vector2> Points
+    {
         get => _points;
         set
         {
-            _points = value;
-            TriangulatePolygon();
+            if (_points != value)
+            {
+                _points = value;
+                if (_isReady)
+                {
+                    TriangulatePolygon();
+                }
+            }
         }
     }
 
     private List<Vector2> _points = new List<Vector2>();
     private MeshFilter _meshFilter;
     private MeshRenderer _meshRenderer;
+    private bool _isReady = false;
 
     private void Awake()
     {
         _meshFilter = GetComponent<MeshFilter>();
         _meshRenderer = GetComponent<MeshRenderer>();
-    }
-
-    private void Start()
-    {
+        _isReady = true;
         TriangulatePolygon();
     }
 

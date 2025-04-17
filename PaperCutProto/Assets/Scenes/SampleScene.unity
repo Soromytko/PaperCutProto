@@ -445,6 +445,22 @@ PrefabInstance:
       propertyPath: _points.Array.data[3].y
       value: -0.2
       objectReference: {fileID: 0}
+    - target: {fileID: 799615838639954040, guid: e4a7c4338eaea9c4685ffcfc2b87c850, type: 3}
+      propertyPath: _shape.PointsChanged.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 799615838639954040, guid: e4a7c4338eaea9c4685ffcfc2b87c850, type: 3}
+      propertyPath: _shape.PointsChanged.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 799615838639954040, guid: e4a7c4338eaea9c4685ffcfc2b87c850, type: 3}
+      propertyPath: _shape.PointsChanged.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 799615838639954040, guid: e4a7c4338eaea9c4685ffcfc2b87c850, type: 3}
+      propertyPath: _shape.PointsChanged.m_PersistentCalls.m_Calls.Array.data[2].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 4293707046989078282, guid: e4a7c4338eaea9c4685ffcfc2b87c850, type: 3}
       propertyPath: m_Name
       value: Polygon

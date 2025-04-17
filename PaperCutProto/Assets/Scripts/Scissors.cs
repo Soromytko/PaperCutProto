@@ -13,6 +13,10 @@ public class Scissors : MonoBehaviour
 
     private Vector3 _lastCursorPosition;
 
+    private Polygon _currentPolygon = null;
+    private PolygonShape _currentPolygonShape = null;
+    private List<int> _intersectionPointIndeces = new List<int>();
+    private List<Vector2> _cutPoints = new List<Vector2>();
 
     private Vector3 getCursorPosition()
     {
@@ -25,8 +29,6 @@ public class Scissors : MonoBehaviour
     private void Update()
     {
         _cursor.position = getCursorPosition();
-
-        _isIntersection = _polygon.IsIntersection(_cursor.position);
 
         if (Input.GetMouseButtonDown(0))
         {
@@ -48,20 +50,14 @@ public class Scissors : MonoBehaviour
             _lastCursorPosition = _cursor.position;
             AddPoint(_lastCursorPosition);
         }
-        else
-        {
-            //_cut.SetPoint(_cut.PointCount - 1, _cursor.position);
-        }
     }
-
-    private List<Vector2> _cutPoints = new List<Vector2>();
-    private List<Vector2> _inter = new List<Vector2>();
 
     private void Reset()
     {
         _cutPoints.Clear();
         _cut.Points.Clear();
-        _inter.Clear();
+        _intersectionPointIndeces.Clear();
+        _currentPolygon = null;
     }
 
     private bool IsRight(Vector2 pointA, Vector2 pointB, Vector2 pointC)
@@ -71,69 +67,82 @@ public class Scissors : MonoBehaviour
         return Vector3.Cross(v1, v2).z < 0;
     }
 
+    private Polygon FindPolygon()
+    {
+        return _polygon;
+    }
+
     private void AddPoint(Vector2 point)
     {
         _cut.AddPoint(point);
-        if (_cut.Points.Count < 2)
+
+        if (_currentPolygon == null)
+        {
+            Polygon newPolygon = FindPolygon();
+            if (newPolygon != null)
+            {
+                _currentPolygon = newPolygon;
+                _currentPolygonShape = new PolygonShape(newPolygon.Shape.Points);
+            }
+        }
+
+        // Process Cut
+        if (_currentPolygon == null || _cut.Points.Count < 2)
         {
             return;
         }
 
-        var inter = _polygon.GetIntersections(_cut.Points[_cut.Points.Count - 2], _cut.Points[_cut.Points.Count - 1]);
-        if (inter.Count == 1)
+        var intersections = _currentPolygonShape.GetIntersections(_cut.Points[_cut.Points.Count - 2], _cut.Points[_cut.Points.Count - 1]);
+        if (intersections != null && intersections.Count == 1)
         {
-            _inter.Add(new Vector2(inter[0].z, inter[0].w));
-            _cutPoints.Add((Vector2)inter[0]);
-
-            if (_inter.Count == 2)
+            var intersection = intersections[0];
+            _currentPolygonShape.InsertIntersectionPoint(ref intersection);
+            _cutPoints.Add(intersection.Point);
+            _intersectionPointIndeces.Add(intersection.StartEdgeIndex + 1);
+            
+            if (_intersectionPointIndeces.Count == 2)
             {
-                List<Vector2> newPoints = new List<Vector2>();
-                newPoints.AddRange(_cutPoints);
+                if (_intersectionPointIndeces[0] >= intersection.StartEdgeIndex + 1)
+                {
+                    _intersectionPointIndeces[0]++;
+                }
 
-                List<Vector2> firstPolygonPoints = Slice(_cutPoints);
+                List<Vector2> newVertices = new List<Vector2>();
+                newVertices.AddRange(_cutPoints);
+
+                List<Vector2> firstPolygonPoints = Slice(_cutPoints, false);
                 List<Vector2> secondPolygonPoints = Slice(_cutPoints, true);
 
-                _polygon.Points = firstPolygonPoints;
+                _polygon.Shape.Points = firstPolygonPoints;
                 Polygon secondPolygon = Instantiate(_polygonPrefab);
-                secondPolygon.Points = secondPolygonPoints;
+                secondPolygon.Shape.Points = secondPolygonPoints;
 
                 Reset();
                 return;
             }
         }
-
-        if (_inter.Count == 1)
+        else if (_intersectionPointIndeces.Count == 1)
         {
             _cutPoints.Add(point);
         }
     }
 
-    private List<Vector2> Slice(List<Vector2> points, bool reverse = false)
+    private List<Vector2> Slice(List<Vector2> vertices, bool reverse = false)
     {
         List<Vector2> result = new List<Vector2>();
-        result.AddRange(points);
+        result.AddRange(vertices);
 
-        int i = (int)(reverse ? _inter[1].x : _inter[1].y);
-        int targetIndex = (int)(reverse ? _inter[0].x : _inter[0].y);
+        int i = (int)_intersectionPointIndeces[1];
+        int targetIndex = (int)_intersectionPointIndeces[0];
+        int step = reverse ? -1 : 1;
 
-        if (reverse)
+        while (i != targetIndex)
         {
-            do
-            {
-                result.Add(_polygon.Points[i]);
-                i--;
-                i = i < 0 ? _polygon.Points.Count - 1 : i;
-            } while(i != targetIndex);
+            result.Add(_currentPolygonShape.Points[i]);
+            i += step;
+            i = i < 0 ? _currentPolygonShape.Points.Count - 1 : (i % _currentPolygonShape.Points.Count);
         }
-        else
-        {
-            while (i != targetIndex)
-            {
-                result.Add(_polygon.Points[i]);
-                i++;
-                i = i >= _polygon.Points.Count ? 0 : i;
-            }
-        }
+
 
         return result;
     }
