@@ -2,13 +2,10 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Scissors : MonoBehaviour
+public class CutState : State
 {
     [SerializeField] private float _pointDistance = 0.1f;
-    [SerializeField] private Transform _cursor;
     [SerializeField] private Cut _cut;
-    [SerializeField] private Polygon _polygon;
-    [SerializeField] private bool _isIntersection;
     [SerializeField] private Polygon _polygonPrefab;
 
     private Vector3 _lastCursorPosition;
@@ -18,21 +15,20 @@ public class Scissors : MonoBehaviour
     private List<int> _intersectionPointIndeces = new List<int>();
     private List<Vector2> _cutPoints = new List<Vector2>();
 
-    private Vector3 getCursorPosition()
+    private Vector2 getCursorPosition()
     {
         Vector3 screenPoint = Input.mousePosition;
         Vector3 result = Camera.main.ScreenToWorldPoint(screenPoint);
-        result.z = transform.position.z;
         return result;
     }
 
-    private void Update()
+    public override void OnTick()
     {
-        _cursor.position = getCursorPosition();
+        Vector2 cursorPosition = getCursorPosition();
 
         if (Input.GetMouseButtonDown(0))
         {
-            AddPoint(_cursor.position);
+            AddPoint(cursorPosition);
         }
         else if (Input.GetMouseButtonUp(0))
         {
@@ -44,10 +40,10 @@ public class Scissors : MonoBehaviour
             return;
         }
 
-        float distance = Vector3.Distance(_cursor.position, _lastCursorPosition);
+        float distance = Vector3.Distance(cursorPosition, _lastCursorPosition);
         if (distance >= _pointDistance)
         {
-            _lastCursorPosition = _cursor.position;
+            _lastCursorPosition = cursorPosition;
             AddPoint(_lastCursorPosition);
         }
     }
@@ -69,7 +65,8 @@ public class Scissors : MonoBehaviour
 
     private Polygon FindPolygon()
     {
-        return _polygon;
+        var polygons = FindObjectsByType<Polygon>(FindObjectsSortMode.None);
+        return polygons.Length > 0 ? polygons[0] : null;
     }
 
     private void AddPoint(Vector2 point)
@@ -113,11 +110,13 @@ public class Scissors : MonoBehaviour
                 List<Vector2> firstPolygonPoints = Slice(_cutPoints, false);
                 List<Vector2> secondPolygonPoints = Slice(_cutPoints, true);
 
-                _polygon.Shape.Points = firstPolygonPoints;
+                _currentPolygon.Shape.Points = firstPolygonPoints;
                 Polygon secondPolygon = Instantiate(_polygonPrefab);
+                secondPolygon.transform.parent = _currentPolygon.transform.parent;
                 secondPolygon.Shape.Points = secondPolygonPoints;
 
                 Reset();
+                SwitchState("ProcessPolygonState");
                 return;
             }
         }
