@@ -46,6 +46,28 @@ public class PolygonShape
         _points = points;
     }
 
+    // Shoelace formula (Gauss's area formula)
+    public float CalculateArea()
+    {
+        var vertices = _points;
+
+        if (vertices == null || vertices.Count < 3)
+            return 0;
+
+        float area = 0;
+        int n = vertices.Count;
+
+        for (int i = 0; i < n; i++)
+        {
+            Vector2 current = vertices[i];
+            Vector2 next = vertices[(i + 1) % n];
+
+            area += (current.x * next.y) - (next.x * current.y);
+        }
+
+        return Mathf.Abs(area / 2);
+    }
+
     public void InsertIntersectionPoint(ref Intersection intersection)
     {
         _points.Insert(intersection.StartEdgeIndex + 1, intersection.Point);
