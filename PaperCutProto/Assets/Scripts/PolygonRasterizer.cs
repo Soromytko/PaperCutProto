@@ -30,6 +30,7 @@ public class PolygonRasterizer : MonoBehaviour
     {
         _meshFilter = GetComponent<MeshFilter>();
         _meshRenderer = GetComponent<MeshRenderer>();
+        _meshRenderer.materials[0].doubleSidedGI = true; // Для глобального освещения
         _isReady = true;
         TriangulatePolygon();
     }
