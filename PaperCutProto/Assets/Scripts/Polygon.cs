@@ -1,25 +1,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(PolygonRasterizer))]
+[RequireComponent(typeof(PolygonTriangulator))]
 public class Polygon : MonoBehaviour
 {
     public PolygonShape Shape => _shape;
 
     [SerializeField] private PolygonShape _shape = new PolygonShape();
 
-    PolygonRasterizer _polygonRasterizer;
+    PolygonTriangulator _polygonTriangulator;
 
     private void Awake()
     {
         _shape.PointsChanged.AddListener(OnPointsChanged); 
-        _polygonRasterizer = GetComponent<PolygonRasterizer>();
+        _polygonTriangulator = GetComponent<PolygonTriangulator>();
         OnPointsChanged();
     }
 
     private void OnPointsChanged()
     {
-        _polygonRasterizer.Points = _shape.Points;    
+        _polygonTriangulator.Points = _shape.Points;    
     }
 
     void OnDrawGizmos()

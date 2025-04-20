@@ -3,7 +3,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
-public class PolygonRasterizer : MonoBehaviour
+public class PolygonTriangulator : MonoBehaviour
 {
     public List<Vector2> Points
     {
