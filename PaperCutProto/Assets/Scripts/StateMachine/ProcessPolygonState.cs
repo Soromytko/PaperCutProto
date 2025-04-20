@@ -34,7 +34,8 @@ public class ProcessPolygonState : State
         
         _polygonManager.DeletePolygon(polygon);
 
-        SwitchState("CutState");
+        // SwitchState("CutState");
+        SwitchState("CompareState");
     }
 
 }

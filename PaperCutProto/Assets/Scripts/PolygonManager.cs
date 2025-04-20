@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PolygonManager : MonoBehaviour
 {
@@ -20,6 +21,11 @@ public class PolygonManager : MonoBehaviour
         {
             _polygons.Add(_mainPolygon);
         }
+    }
+
+    public void Reset()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
     
     public void SetMainPolygon(Polygon polygon)

@@ -37,11 +37,13 @@ public class Polygon : MonoBehaviour
 
         Gizmos.color = Color.white;
         List<Vector2> points = _shape.Points;
+        Vector2 pos = transform.position;
+        Vector2 scale = transform.localScale;
         for (int i = 0; i < points.Count - 1; i++)
         {
-            Gizmos.DrawLine(points[i], points[i + 1]);
+            Gizmos.DrawLine(points[i] * scale + pos, points[i + 1] * scale + pos);
         }
-        Gizmos.DrawLine(points[0], points[points.Count - 1]);
+        Gizmos.DrawLine(points[0] * scale + pos, points[points.Count - 1] * scale + pos);
     }
 
 }
