@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(LineRenderer))]
 public class Cut : MonoBehaviour
 {
     public List<Vector2> Points => _points;
@@ -9,82 +10,31 @@ public class Cut : MonoBehaviour
     private List<Vector2> _points = new List<Vector2>();
     private bool _isCorrect = false;
 
-    // public void EndCutting()
-    // {
-    //     int intersectionCount = 0;
+    private LineRenderer _lineRenderer;
 
-    //     for (int i = 0; i < _points.Count - 1; i ++)
-    //     {
-    //         Vector2 point1 = (Vector2)_points[i];
-    //         Vector2 point2 = (Vector2)_points[i + 1];
-
-    //         var currentIntersections = _polygon.GetIntersections(point1, point2);
-    //         intersectionCount += currentIntersections.Count;
-    //         _intersectionPoints.AddRange(currentIntersections);
-
-    //         _intersectionEdges.AddRange(currentIntersections);
-
-    //         if (_intersectionPoints.Count > 0 && intersectionCount % 2 != 0) {
-    //             _intersectionPoints.Add(point2);
-    //         }
-    //     }
-
-    //     if (_intersectionEdges.Count == 0 || _intersectionEdges.Count % 2 != 0)
-    //     {
-    //         return;
-    //     }
-
-    //     List<Vector3> newPoints = new List<Vector3>();
-    //     foreach (var intersection in _intersectionPoints)
-    //     {
-    //         newPoints.Add((Vector3)intersection);
-    //     }
-
-    //     int j = (int)_intersectionEdges[0].z;
-    //     do {
-    //         newPoints.Add(_polygon.Points[j]);
-    //         j++;
-
-    //     } while(j <= _intersectionEdges[_intersectionEdges.Count - 1].w);
-
-    //     _polygon.Points = newPoints;
-
-    // }
+    private void Awake()
+    {
+        _lineRenderer = GetComponent<LineRenderer>();
+        UpdateLineRenderer();
+    }
 
     public void AddPoint(Vector2 point)
     {
         _points.Add(point);
+        UpdateLineRenderer();
     }
 
     public void Reset()
     {
         _points.Clear();
+        UpdateLineRenderer();
     }
 
-    private void Update()
+    private void UpdateLineRenderer()
     {
-        
+        var points = System.Array.ConvertAll(_points.ToArray(), v => new Vector3(v.x, v.y, -1.0f));
+        _lineRenderer.positionCount = points.Length;
+        _lineRenderer.SetPositions(points);
     }
 
-    private void OnDrawGizmos()
-    {
-        // Gizmos.color = Color.red;
-        // foreach (var point in _intersectionPoints)
-        // {
-        //     Gizmos.DrawSphere(point, 0.05f);
-        // }
-
-
-        Gizmos.color = Color.white;
-        for (int i = 0; i < _points.Count - 1; i++)
-        {
-            Gizmos.DrawLine(_points[i], _points[i + 1]);
-        }
-
-        Gizmos.color = !_isCorrect ? Color.green : Color.red;
-        foreach (var point in _points)
-        {
-            //Gizmos.DrawSphere(point, 0.02f);
-        }
-    }
 }

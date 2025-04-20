@@ -51,7 +51,7 @@ public class CutState : State
     private void Reset()
     {
         _cutPoints.Clear();
-        _cut.Points.Clear();
+        _cut.Reset();
         _intersectionPointIndeces.Clear();
         _currentPolygon = null;
     }
