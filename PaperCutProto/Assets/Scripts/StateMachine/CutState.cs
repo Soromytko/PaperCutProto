@@ -131,17 +131,23 @@ public class CutState : State
         List<Vector2> result = new List<Vector2>();
         result.AddRange(vertices);
 
-        int i = (int)_intersectionPointIndeces[1];
-        int targetIndex = (int)_intersectionPointIndeces[0];
-        int step = reverse ? -1 : 1;
-
-        while (i != targetIndex)
+        if (reverse)
         {
-            result.Add(_currentPolygonShape.Points[i]);
-            i += step;
-            i = i < 0 ? _currentPolygonShape.Points.Count - 1 : (i % _currentPolygonShape.Points.Count);
+            result.Reverse();
         }
 
+        int i = reverse ? _intersectionPointIndeces[0] : _intersectionPointIndeces[1];
+        int targetIndex = reverse ? _intersectionPointIndeces[1] : _intersectionPointIndeces[0];
+
+        while (true)
+        {
+            i = (i + 1) % _currentPolygonShape.Points.Count;
+            if (i == targetIndex)
+            {
+                break;
+            }
+            result.Add(_currentPolygonShape.Points[i]);
+        }
 
         return result;
     }

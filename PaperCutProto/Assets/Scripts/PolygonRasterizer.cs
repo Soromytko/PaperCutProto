@@ -21,6 +21,7 @@ public class PolygonRasterizer : MonoBehaviour
         }
     }
 
+    // Counter-Clockwise (CCW)
     private List<Vector2> _points = new List<Vector2>();
     private MeshFilter _meshFilter;
     private MeshRenderer _meshRenderer;
@@ -30,162 +31,123 @@ public class PolygonRasterizer : MonoBehaviour
     {
         _meshFilter = GetComponent<MeshFilter>();
         _meshRenderer = GetComponent<MeshRenderer>();
-        _meshRenderer.materials[0].doubleSidedGI = true; // Для глобального освещения
+        _meshRenderer.materials[0].doubleSidedGI = true;
         _isReady = true;
         TriangulatePolygon();
     }
 
-    private List<Vector2> GetEdges()
+    private void TriangulatePolygon()
     {
-        List<Vector2> result = new List<Vector2>();
-        for (int i = 0; i < _points.Count; i++)
-        {
-            result.Add(_points[i]);
-        }
-        result.Add(_points[0]);
-        return result;
-    }
+        var polygonPoints = _points.ToArray();
 
-    public void TriangulatePolygon()
-    {
-        var points = _points; 
-
-        if (points.Count < 3)
-        {
-            Debug.LogWarning("Need at least 3 points to triangulate a polygon");
-            return;
-        }
-        
-        var mesh = new Mesh();
-        _meshFilter.mesh = mesh;
-        
-        List<Vector2> polygonPoints = new List<Vector2>();
-        foreach (Vector3 point in points)
-        {
-            polygonPoints.Add(new Vector2(point.x, point.y));
-        }
-        
         int[] triangles = Triangulate(polygonPoints);
-        
-        var res = new List<Vector3>();
-        foreach (var item in polygonPoints) res.Add(item);
-        mesh.vertices = res.ToArray();
+
+        Mesh mesh = new Mesh();
+        mesh.vertices = System.Array.ConvertAll(polygonPoints, v => new Vector3(v.x, v.y, 0));
         mesh.triangles = triangles;
-        
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
+
+        GetComponent<MeshFilter>().mesh = mesh;
     }
-    
-    private int[] Triangulate(List<Vector2> polygon)
+
+    // EarClipping
+    public int[] Triangulate(Vector2[] polygon)
     {
         List<int> indices = new List<int>();
         
-        int n = polygon.Count;
-        if (n < 3) return indices.ToArray();
-        
-        int[] V = new int[n];
-        if (Area(polygon) > 0)
+        // Если полигон имеет менее 3 вершин, триангуляция невозможна
+        if (polygon.Length < 3)
+            return indices.ToArray();
+
+        // Создаём список индексов вершин
+        List<int> vertexIndices = new List<int>();
+        for (int i = 0; i < polygon.Length; i++)
+            vertexIndices.Add(i);
+
+        // Пока остаются вершины для обработки
+        while (vertexIndices.Count > 3)
         {
-            for (int v = 0; v < n; v++)
-                V[v] = v;
-        }
-        else
-        {
-            for (int v = 0; v < n; v++)
-                V[v] = (n - 1) - v;
-        }
-        
-        int nv = n;
-        int count = 2 * nv;
-        for (int m = 0, v = nv - 1; nv > 2; )
-        {
-            if ((count--) <= 0)
-                return indices.ToArray();
-            
-            int u = v;
-            if (nv <= u)
-                u = 0;
-            v = u + 1;
-            if (nv <= v)
-                v = 0;
-            int w = v + 1;
-            if (nv <= w)
-                w = 0;
-            
-            if (Snip(polygon, u, v, w, nv, V))
+            bool earFound = false;
+
+            // Перебираем все вершины в поисках "уха"
+            for (int i = 0; i < vertexIndices.Count; i++)
             {
-                int a, b, c, s, t;
-                a = V[u];
-                b = V[v];
-                c = V[w];
-                indices.Add(a);
-                indices.Add(b);
-                indices.Add(c);
-                m++;
-                for (s = v, t = v + 1; t < nv; s++, t++)
-                    V[s] = V[t];
-                nv--;
-                count = 2 * nv;
+                int prev = (i == 0) ? vertexIndices.Count - 1 : i - 1;
+                int current = i;
+                int next = (i == vertexIndices.Count - 1) ? 0 : i + 1;
+
+                Vector2 a = polygon[vertexIndices[prev]];
+                Vector2 b = polygon[vertexIndices[current]];
+                Vector2 c = polygon[vertexIndices[next]];
+
+                // Проверяем, является ли текущая вершина "ухом"
+                if (IsEar(a, b, c, polygon, vertexIndices))
+                {
+                    // Добавляем треугольник в результат
+                    indices.Add(vertexIndices[prev]);
+                    indices.Add(vertexIndices[current]);
+                    indices.Add(vertexIndices[next]);
+
+                    // Удаляем текущую вершину (она больше не нужна)
+                    vertexIndices.RemoveAt(current);
+                    earFound = true;
+                    break;
+                }
+            }
+
+            // Если "ухо" не найдено, полигон не простой (возможно, самопересекающийся)
+            if (!earFound)
+            {
+                Debug.LogError("Triangulation failed: Polygon may be self-intersecting or degenerate.");
+                return new int[0];
             }
         }
-        
+
+        // Добавляем последний оставшийся треугольник
+        indices.Add(vertexIndices[0]);
+        indices.Add(vertexIndices[1]);
+        indices.Add(vertexIndices[2]);
+
         return indices.ToArray();
     }
-    
-    private float Area(List<Vector2> polygon)
+
+    // Проверяет, является ли треугольник ABC "ухом" (не содержит других вершин внутри)
+    private static bool IsEar(Vector2 a, Vector2 b, Vector2 c, Vector2[] polygon, List<int> vertexIndices)
     {
-        int n = polygon.Count;
-        float A = 0.0f;
-        
-        for (int p = n - 1, q = 0; q < n; p = q++)
-        {
-            Vector2 pval = polygon[p];
-            Vector2 qval = polygon[q];
-            A += pval.x * qval.y - qval.x * pval.y;
-        }
-        
-        return (A * 0.5f);
-    }
-    
-    private bool Snip(List<Vector2> polygon, int u, int v, int w, int n, int[] V)
-    {
-        Vector2 A = polygon[V[u]];
-        Vector2 B = polygon[V[v]];
-        Vector2 C = polygon[V[w]];
-        
-        if (Mathf.Epsilon > (((B.x - A.x) * (C.y - A.y)) - ((B.y - A.y) * (C.x - A.x))))
+        // Если угол выпуклый (> 180°), это не "ухо"
+        if (!IsConvex(a, b, c))
             return false;
-        
-        for (int p = 0; p < n; p++)
+
+        // Проверяем, что внутри треугольника ABC нет других вершин
+        for (int i = 0; i < vertexIndices.Count; i++)
         {
-            if ((p == u) || (p == v) || (p == w))
+            Vector2 p = polygon[vertexIndices[i]];
+            if (p == a || p == b || p == c)
                 continue;
-            
-            Vector2 P = polygon[V[p]];
-            if (InsideTriangle(A, B, C, P))
+
+            if (IsPointInTriangle(a, b, c, p))
                 return false;
         }
-        
+
         return true;
     }
-    
-    private bool InsideTriangle(Vector2 A, Vector2 B, Vector2 C, Vector2 P)
+
+    // Проверяет, является ли угол ABC выпуклым (поворот против часовой стрелки)
+    private static bool IsConvex(Vector2 a, Vector2 b, Vector2 c)
     {
-        float ax, ay, bx, by, cx, cy, apx, apy, bpx, bpy, cpx, cpy;
-        float cCROSSap, bCROSScp, aCROSSbp;
-        
-        ax = C.x - B.x; ay = C.y - B.y;
-        bx = A.x - C.x; by = A.y - C.y;
-        cx = B.x - A.x; cy = B.y - A.y;
-        apx = P.x - A.x; apy = P.y - A.y;
-        bpx = P.x - B.x; bpy = P.y - B.y;
-        cpx = P.x - C.x; cpy = P.y - C.y;
-        
-        aCROSSbp = ax * bpy - ay * bpx;
-        cCROSSap = cx * apy - cy * apx;
-        bCROSScp = bx * cpy - by * cpx;
-        
-        return ((aCROSSbp >= 0.0f) && (bCROSScp >= 0.0f) && (cCROSSap >= 0.0f));
+        float cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+        return cross > 0; // Если > 0 — выпуклый (CCW)
     }
 
+    // Проверяет, находится ли точка P внутри треугольника ABC
+    private static bool IsPointInTriangle(Vector2 a, Vector2 b, Vector2 c, Vector2 p)
+    {
+        // Используем барицентрические координаты
+        float alpha = ((b.y - c.y) * (p.x - c.x) + (c.x - b.x) * (p.y - c.y)) /
+                      ((b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y));
+        float beta = ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) /
+                     ((b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y));
+        float gamma = 1 - alpha - beta;
+
+        return alpha > 0 && beta > 0 && gamma > 0;
+    }
 }

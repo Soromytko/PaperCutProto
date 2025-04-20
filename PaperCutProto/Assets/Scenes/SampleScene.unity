@@ -488,7 +488,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a6b2edef882c8645a248a3eb00d4a00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _pointDistance: 0.1
+  _pointDistance: 0.03
   _cut: {fileID: 1106127378}
   _polygonPrefab: {fileID: 799615838639954040, guid: e4a7c4338eaea9c4685ffcfc2b87c850, type: 3}
 --- !u!1001 &7803966261126858032
