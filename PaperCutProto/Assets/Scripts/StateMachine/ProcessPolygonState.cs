@@ -2,11 +2,18 @@ using UnityEngine;
 
 public class ProcessPolygonState : State
 {
+    private PolygonManager _polygonManager;
+
+    private void Awake()
+    {
+        _polygonManager = FindAnyObjectByType<PolygonManager>();
+    }
+
     public override void OnEnter()
     {
-        var polygons = GetPolygons();
+        var polygons = _polygonManager.Polygons;
 
-        if (polygons.Length == 0)
+        if (polygons.Count < 2)
         {
             return;            
         }
@@ -14,7 +21,7 @@ public class ProcessPolygonState : State
         var polygon = polygons[0];
         var area = polygon.Shape.CalculateArea();
 
-        for (int i = 1; i < polygons.Length; i++)
+        for (int i = 1; i < polygons.Count; i++)
         {
             var currentPolygon = polygons[i];
             var currentArea = currentPolygon.Shape.CalculateArea();
@@ -24,15 +31,10 @@ public class ProcessPolygonState : State
                 polygon = currentPolygon;
             }
         }
-
-        Destroy(polygon.gameObject);
+        
+        _polygonManager.DeletePolygon(polygon);
 
         SwitchState("CutState");
-    }
-
-    private Polygon[] GetPolygons()
-    {
-        return FindObjectsByType<Polygon>(FindObjectsSortMode.None);
     }
 
 }

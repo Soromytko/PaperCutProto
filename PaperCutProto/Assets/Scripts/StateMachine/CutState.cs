@@ -6,14 +6,19 @@ public class CutState : State
 {
     [SerializeField] private float _pointDistance = 0.1f;
     [SerializeField] private Cut _cut;
-    [SerializeField] private Polygon _polygonPrefab;
 
     private Vector3 _lastCursorPosition;
 
+    private PolygonManager _polygonManager;
     private Polygon _currentPolygon = null;
     private PolygonShape _currentPolygonShape = null;
     private List<int> _intersectionPointIndeces = new List<int>();
     private List<Vector2> _cutPoints = new List<Vector2>();
+
+    private void Awake()
+    {
+        _polygonManager = FindAnyObjectByType<PolygonManager>();
+    }
 
     private Vector2 getCursorPosition()
     {
@@ -65,8 +70,7 @@ public class CutState : State
 
     private Polygon FindPolygon()
     {
-        var polygons = FindObjectsByType<Polygon>(FindObjectsSortMode.None);
-        return polygons.Length > 0 ? polygons[0] : null;
+        return _polygonManager.MainPolygon;
     }
 
     private void AddPoint(Vector2 point)
@@ -111,9 +115,7 @@ public class CutState : State
                 List<Vector2> secondPolygonPoints = Slice(_cutPoints, true);
 
                 _currentPolygon.Shape.Points = firstPolygonPoints;
-                Polygon secondPolygon = Instantiate(_polygonPrefab);
-                secondPolygon.transform.parent = _currentPolygon.transform.parent;
-                secondPolygon.Shape.Points = secondPolygonPoints;
+                Polygon secondPolygon = _polygonManager.CreatePolygon(secondPolygonPoints.ToArray());
 
                 Reset();
                 SwitchState("ProcessPolygonState");
