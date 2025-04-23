@@ -22,6 +22,11 @@ public class Polygon : MonoBehaviour
         _polygonTriangulator.Points = _shape.Points;    
     }
 
+    public Vector2 GetLocalPoint(Vector2 globalPoint)
+    {
+        return globalPoint - (Vector2)transform.position;
+    }
+
     void OnDrawGizmos()
     {
         if (_shape?.Points.Count < 2)
@@ -29,16 +34,17 @@ public class Polygon : MonoBehaviour
             return;
         }
 
+        Vector2 pos = transform.position;
+        Vector2 scale = transform.localScale;
+
         // Gizmos.color = Color.red;
         // foreach (Vector2 point in _shape.Points)
         // {
-        //     Gizmos.DrawSphere(point, 0.03f);
+        //     Gizmos.DrawSphere(point * scale + pos, 0.03f * Mathf.Min(scale.x, scale.y));
         // }
 
         Gizmos.color = Color.white;
         List<Vector2> points = _shape.Points;
-        Vector2 pos = transform.position;
-        Vector2 scale = transform.localScale;
         for (int i = 0; i < points.Count - 1; i++)
         {
             Gizmos.DrawLine(points[i] * scale + pos, points[i + 1] * scale + pos);

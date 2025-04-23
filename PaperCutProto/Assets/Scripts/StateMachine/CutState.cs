@@ -93,7 +93,10 @@ public class CutState : State
             return;
         }
 
-        var intersections = _currentPolygonShape.GetIntersections(_cut.Points[_cut.Points.Count - 2], _cut.Points[_cut.Points.Count - 1]);
+        Vector2 point1 = _currentPolygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 2]);
+        Vector2 point2 = _currentPolygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 1]);
+
+        var intersections = _currentPolygonShape.GetIntersections(point1, point2);
         if (intersections != null && intersections.Count == 1)
         {
             var intersection = intersections[0];
@@ -124,7 +127,7 @@ public class CutState : State
         }
         else if (_intersectionPointIndeces.Count == 1)
         {
-            _cutPoints.Add(point);
+            _cutPoints.Add(_currentPolygon.GetLocalPoint(point));
         }
     }
 

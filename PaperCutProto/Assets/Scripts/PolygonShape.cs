@@ -85,8 +85,10 @@ public class PolygonShape
         return result;
     }
 
-    public bool IsIntersection(Vector2 point)
+    public bool IsIntersection(Vector2 localPoint)
     {
+        Vector2 point = localPoint;
+        
         if (_points.Count < 3)
         {
             return false;
@@ -119,8 +121,11 @@ public class PolygonShape
         return intersectCount % 2 != 0;
     }
 
-    public List<Intersection> GetIntersections(Vector2 point1, Vector2 point2)
+    public List<Intersection> GetIntersections(Vector2 firstLocalPoint, Vector2 secondLocalPoint)
     {
+        Vector2 point1 = firstLocalPoint;
+        Vector2 point2 = secondLocalPoint;
+
         List<Intersection> result = new List<Intersection>();
 
         var edges = GetEdges();
