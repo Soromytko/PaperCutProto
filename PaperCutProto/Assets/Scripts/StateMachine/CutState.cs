@@ -7,7 +7,7 @@ public class CutState : State
     [SerializeField] private float _pointDistance = 0.1f;
     [SerializeField] private Cut _cut;
 
-    private Vector3 _lastCursorPosition;
+    private Vector2 _lastCursorPosition;
 
     private PolygonManager _polygonManager;
     private Polygon _currentPolygon = null;
@@ -34,6 +34,7 @@ public class CutState : State
         if (Input.GetMouseButtonDown(0))
         {
             AddPoint(cursorPosition);
+            _lastCursorPosition = cursorPosition;
         }
         else if (Input.GetMouseButtonUp(0))
         {
@@ -45,12 +46,18 @@ public class CutState : State
             return;
         }
 
-        float distance = Vector3.Distance(cursorPosition, _lastCursorPosition);
+        float distance = Vector2.Distance(cursorPosition, _lastCursorPosition);
         if (distance >= _pointDistance)
         {
-            _lastCursorPosition = cursorPosition;
-            AddPoint(_lastCursorPosition);
+            Vector2 cursorDirection = (cursorPosition - _lastCursorPosition).normalized;
+            while (distance >= _pointDistance)
+            {
+                AddPoint(_lastCursorPosition + cursorDirection * _pointDistance);
+                _lastCursorPosition += cursorDirection * _pointDistance;
+                distance -= _pointDistance;
+            }
         }
+        
     }
 
     private void Reset()
