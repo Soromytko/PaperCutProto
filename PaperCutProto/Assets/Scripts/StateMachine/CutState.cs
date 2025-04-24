@@ -124,11 +124,13 @@ public class CutState : State
                 List<Vector2> firstPolygonPoints = Slice(_cutPoints, false);
                 List<Vector2> secondPolygonPoints = Slice(_cutPoints, true);
 
-                _currentPolygon.Shape.Points = firstPolygonPoints;
-                Polygon secondPolygon = _polygonManager.CreatePolygon(secondPolygonPoints.ToArray());
+                var firstShape = new PolygonShape(firstPolygonPoints);
+                var secondShape = new PolygonShape(secondPolygonPoints);
+
+                ProcessSlicedShapes(firstShape, secondShape);
 
                 Reset();
-                SwitchState("ProcessPolygonState");
+                SwitchState("CompareState");
                 return;
             }
         }
@@ -162,6 +164,16 @@ public class CutState : State
         }
 
         return result;
+    }
+
+    private void ProcessSlicedShapes(PolygonShape firstShape, PolygonShape secondShape)
+    {
+        float firstArea = firstShape.CalculateArea();
+        float secondArea = secondShape.CalculateArea();
+
+        PolygonShape shape = firstArea > secondArea ? firstShape : secondShape;
+
+        _currentPolygon.Shape.Points = shape.Points;
     }
 
     private void OnDrawGizmos()

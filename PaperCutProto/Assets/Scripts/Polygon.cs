@@ -43,13 +43,13 @@ public class Polygon : MonoBehaviour
         //     Gizmos.DrawSphere(point * scale + pos, 0.03f * Mathf.Min(scale.x, scale.y));
         // }
 
-        Gizmos.color = Color.white;
-        List<Vector2> points = _shape.Points;
-        for (int i = 0; i < points.Count - 1; i++)
-        {
-            Gizmos.DrawLine(points[i] * scale + pos, points[i + 1] * scale + pos);
-        }
-        Gizmos.DrawLine(points[0] * scale + pos, points[points.Count - 1] * scale + pos);
+        // Gizmos.color = Color.white;
+        // List<Vector2> points = _shape.Points;
+        // for (int i = 0; i < points.Count - 1; i++)
+        // {
+        //     Gizmos.DrawLine(points[i] * scale + pos, points[i + 1] * scale + pos);
+        // }
+        // Gizmos.DrawLine(points[0] * scale + pos, points[points.Count - 1] * scale + pos);
     }
 
 }
