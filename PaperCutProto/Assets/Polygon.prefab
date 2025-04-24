@@ -53,8 +53,8 @@ MonoBehaviour:
         m_Calls: []
     _points:
     - {x: 0, y: 0}
-    - {x: 0.25, y: 1}
-    - {x: -0.25, y: 1}
+    - {x: 0.27, y: 1}
+    - {x: -0.27, y: 1}
 --- !u!33 &8292846499467866314
 MeshFilter:
   m_ObjectHideFlags: 0
