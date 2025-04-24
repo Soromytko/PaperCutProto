@@ -40,6 +40,19 @@ public class Polygon : MonoBehaviour
         return _shape.GetIntersectionsByLine(firstLocalPoint, secondLocalPoint);
     }
 
+    public PolygonShape CutOff(Polygon polygon)
+    {
+        Vector2 offset = polygon.transform.position - transform.position;
+
+        var maybeResult = _shape.CutOff(polygon.Shape, offset);
+        if (maybeResult.Points.Count == 0)
+        {
+            offset = -offset;
+            return polygon.Shape.CutOff(_shape, offset);
+        }
+        return maybeResult;
+    }
+
     void OnDrawGizmos()
     {
         if (_shape?.Points.Count < 2)

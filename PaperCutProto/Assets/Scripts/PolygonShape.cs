@@ -68,6 +68,54 @@ public class PolygonShape
         return Mathf.Abs(area / 2);
     }
 
+    // Sutherland-Hodgman algorithm
+    public PolygonShape CutOff(PolygonShape shape, Vector2 shapeOffset)
+    {
+        if (_points.Count < 2)
+        {
+            return null;
+        }
+
+        var resultPoints = new List<Vector2>();
+        var prevPoint = _points[0];
+        bool isPrevInside = shape.IsPointInside(_points[0] - shapeOffset);
+        for (int i = 1; i < _points.Count + 1; i++)
+        {
+            var currentPoint = _points[i % _points.Count];
+
+            var localPrevPoint = prevPoint - shapeOffset;
+            var localCurrentPoint = currentPoint - shapeOffset;
+
+            bool isCurrentInside = shape.IsPointInside(localCurrentPoint);
+            if (isCurrentInside)
+            {
+                if (isPrevInside)
+                {
+                    resultPoints.Add(localCurrentPoint);
+                }
+                else
+                {
+                    var intersections = shape.GetIntersectionsByLine(localPrevPoint, localCurrentPoint);
+                    resultPoints.Add(intersections[0].Point);
+                    resultPoints.Add(localCurrentPoint);
+                }
+            }
+            else
+            {
+                if (isPrevInside)
+                {
+                    var intersections = shape.GetIntersectionsByLine(localPrevPoint, localCurrentPoint);
+                    resultPoints.Add(intersections[0].Point);       
+                }
+            }
+
+            prevPoint = currentPoint;
+            isPrevInside = isCurrentInside;
+        }
+
+        return new PolygonShape(resultPoints);
+    }
+
     public void InsertIntersectionPoint(ref Intersection intersection)
     {
         _points.Insert(intersection.StartEdgeIndex + 1, intersection.Point);
