@@ -27,6 +27,19 @@ public class Polygon : MonoBehaviour
         return globalPoint - (Vector2)transform.position;
     }
 
+    public bool IsPointInside(Vector2 globalPoint)
+    {
+        return _shape.IsPointInside(GetLocalPoint(globalPoint));
+    }
+
+    public List<Intersection> GetIntersectionsByLine(Vector2 lineStartGlobalPoint, Vector2 lineEndGlobalPoint)
+    {
+        var firstLocalPoint = GetLocalPoint(lineStartGlobalPoint);
+        var secondLocalPoint = GetLocalPoint(lineEndGlobalPoint);
+
+        return _shape.GetIntersectionsByLine(firstLocalPoint, secondLocalPoint);
+    }
+
     void OnDrawGizmos()
     {
         if (_shape?.Points.Count < 2)

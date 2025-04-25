@@ -103,7 +103,7 @@ public class CutState : State
         Vector2 point1 = _currentPolygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 2]);
         Vector2 point2 = _currentPolygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 1]);
 
-        var intersections = _currentPolygonShape.GetIntersections(point1, point2);
+        var intersections = _currentPolygonShape.GetIntersectionsByLine(point1, point2);
         if (intersections != null && intersections.Count == 1)
         {
             var intersection = intersections[0];

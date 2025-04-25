@@ -85,7 +85,7 @@ public class PolygonShape
         return result;
     }
 
-    public bool IsIntersection(Vector2 localPoint)
+    public bool IsPointInside(Vector2 localPoint)
     {
         Vector2 point = localPoint;
         
@@ -121,7 +121,7 @@ public class PolygonShape
         return intersectCount % 2 != 0;
     }
 
-    public List<Intersection> GetIntersections(Vector2 firstLocalPoint, Vector2 secondLocalPoint)
+    public List<Intersection> GetIntersectionsByLine(Vector2 firstLocalPoint, Vector2 secondLocalPoint)
     {
         Vector2 point1 = firstLocalPoint;
         Vector2 point2 = secondLocalPoint;
