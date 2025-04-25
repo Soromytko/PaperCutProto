@@ -74,17 +74,6 @@ public class PolygonShape
         PointsChanged?.Invoke();
     }
 
-    private List<Vector2> GetEdges()
-    {
-        List<Vector2> result = new List<Vector2>();
-        for (int i = 0; i < _points.Count; i++)
-        {
-            result.Add(_points[i]);
-        }
-        result.Add(_points[0]);
-        return result;
-    }
-
     public bool IsPointInside(Vector2 localPoint)
     {
         Vector2 point = localPoint;
@@ -94,24 +83,25 @@ public class PolygonShape
             return false;
         }
 
-        List<Vector2> edges = GetEdges();
-
         int intersectCount = 0;
-        for (int i = 0; i < edges.Count - 1; i++)
+        for (int i = 0; i < _points.Count; i++)
         {
-            if (point.y < Mathf.Min(edges[i].y, edges[i + 1].y) || point.y > Mathf.Max(edges[i].y, edges[i + 1].y))
+            var edgeStart = _points[i];
+            var edgeEnd = _points[(i + 1) % _points.Count];
+
+            if (point.y < Mathf.Min(edgeStart.y, edgeEnd.y) || point.y > Mathf.Max(edgeStart.y, edgeEnd.y))
             {
                 continue;
             }
-            if (point.x > Mathf.Max(edges[i].x, edges[i + 1].x))
+            if (point.x > Mathf.Max(edgeStart.x, edgeEnd.x))
             {
                 continue;
             }
 
-            float t = (point.y - edges[i].y) / (edges[i + 1].y - edges[i].y);
+            float t = (point.y - edgeStart.y) / (edgeEnd.y - edgeStart.y);
             if (t >= 0 && t <= 1)
             {
-                float x = edges[i].x + t * (edges[i + 1].x - edges[i].x);
+                float x = edgeStart.x + t * (edgeEnd.x - edgeStart.x);
                 if (x > point.x)
                 {
                     intersectCount++;
@@ -128,16 +118,17 @@ public class PolygonShape
 
         List<Intersection> result = new List<Intersection>();
 
-        var edges = GetEdges();
-        for (int i = 0; i < edges.Count - 1; i++)
+        for (int i = 0; i < _points.Count; i++)
         {
-            var maybeIntersection = IsLineIntersection(edges[i], edges[i + 1], point1, point2);
+            var edgeStart = _points[i];
+            var edgeEnd = _points[(i + 1) % _points.Count];
+            var maybeIntersection = IsLineIntersection(edgeStart, edgeEnd, point1, point2);
             if (maybeIntersection != null)
             {
                 Intersection intersection = new Intersection(
                     (Vector2)maybeIntersection,
                     i,
-                    ++i % Points.Count);
+                    (i + 1) % Points.Count);
                 result.Add(intersection);
             }
         }
@@ -145,7 +136,7 @@ public class PolygonShape
         return result;
     }
 
-    private Vector2? IsLineIntersection(Vector2 pointA, Vector2 pointB, Vector2 pointC, Vector2 pointD)
+    public Vector2? IsLineIntersection(Vector2 pointA, Vector2 pointB, Vector2 pointC, Vector2 pointD)
     {
         Vector2 b = pointB - pointA; // Вектор AB
         Vector2 d = pointD - pointC; // Вектор CD
