@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -41,12 +42,41 @@ public class PolygonTriangulator : MonoBehaviour
         var polygonPoints = _points.ToArray();
 
         int[] triangles = Triangulate(polygonPoints);
+        Vector3[] vertices = System.Array.ConvertAll(polygonPoints, v => new Vector3(v.x, v.y, 0));
+        Vector2[] uv = createUV(vertices);
 
         Mesh mesh = new Mesh();
-        mesh.vertices = System.Array.ConvertAll(polygonPoints, v => new Vector3(v.x, v.y, 0));
+        mesh.vertices = vertices;
         mesh.triangles = triangles;
+        mesh.uv = uv;
 
         GetComponent<MeshFilter>().mesh = mesh;
+    }
+
+    private Vector2[] createUV(Vector3[] vertices)
+    {
+        var maxMagnitude = getMaxVertexMagnitude(vertices);
+        return vertices.Select(x => new Vector2(x.x, x.y) / maxMagnitude).ToArray();
+    }
+
+    private float getMaxVertexMagnitude(Vector3[] vertices)
+    {
+        if (vertices.Length == 0)
+        {
+            return 0;
+        }
+
+        float result = vertices[0].magnitude;
+        for (int i = 1; i < vertices.Length; i++)
+        {
+            float currentMagnitude = vertices[i].magnitude;
+            if (currentMagnitude > result)
+            {
+                result = currentMagnitude;
+            }
+        }
+
+        return result;
     }
 
     // EarClipping
