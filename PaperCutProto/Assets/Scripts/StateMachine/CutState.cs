@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(ScissorsSoundPlayer))]
 public class CutState : State
 {
     [SerializeField] private float _pointDistance = 0.1f;
@@ -15,9 +16,12 @@ public class CutState : State
     private List<int> _intersectionPointIndeces = new List<int>();
     private List<Vector2> _cutPoints = new List<Vector2>();
 
+    private ScissorsSoundPlayer _scissorsSoundPlayer;
+
     private void Awake()
     {
         _polygonManager = FindAnyObjectByType<PolygonManager>();
+        _scissorsSoundPlayer = GetComponent<ScissorsSoundPlayer>();
     }
 
     private Vector2 getCursorPosition()
@@ -105,7 +109,7 @@ public class CutState : State
 
         var intersections = _currentPolygonShape.GetIntersectionsByLine(point1, point2);
         if (intersections != null && intersections.Count == 1)
-        {
+        {            
             var intersection = intersections[0];
             _currentPolygonShape.InsertIntersectionPoint(ref intersection);
             _cutPoints.Add(intersection.Point);
@@ -137,6 +141,7 @@ public class CutState : State
         else if (_intersectionPointIndeces.Count == 1)
         {
             _cutPoints.Add(_currentPolygon.GetLocalPoint(point));
+            _scissorsSoundPlayer.Play();
         }
     }
 
