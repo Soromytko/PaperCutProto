@@ -730,7 +730,7 @@ GameObject:
   - component: {fileID: 990552318}
   - component: {fileID: 990552317}
   m_Layer: 0
-  m_Name: BackgroundMusic
+  m_Name: BackgroundSoundtrack
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
