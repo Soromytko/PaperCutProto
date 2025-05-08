@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(PolygonTriangulator))]
+[RequireComponent(typeof(MeshSubdivider))]
 public class Polygon : MonoBehaviour
 {
     public PolygonShape Shape => _shape;

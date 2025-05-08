@@ -23,7 +23,7 @@ public class PolygonTriangulator : MonoBehaviour
     }
 
     // Counter-Clockwise (CCW)
-    private List<Vector2> _points = new List<Vector2>();
+    [SerializeField] private List<Vector2> _points = new List<Vector2>();
     private MeshFilter _meshFilter;
     private MeshRenderer _meshRenderer;
     private bool _isReady = false;
