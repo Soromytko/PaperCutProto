@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Polygon
-  m_Shader: {fileID: 4800000, guid: d7cd6baf710fa9e47b340447cd02173a, type: 3}
+  m_Name: Paper
+  m_Shader: {fileID: 4800000, guid: e8620e1d4429d264d9d3d9fe21cb3a0b, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -39,25 +39,17 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _DetailTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _GlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _HeightMap:
-        m_Texture: {fileID: 2800000, guid: 0a0266f8bac8acb4d94dd83ae4d9287b, type: 3}
+        m_Texture: {fileID: 2800000, guid: 920a2bab2847b5f4d95b2788434b2cdb, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 8b549ca36fb006a4893baf0e0c6f2f87, type: 3}
-        m_Scale: {x: 3, y: 3}
+        m_Texture: {fileID: 2800000, guid: 0a0266f8bac8acb4d94dd83ae4d9287b, type: 3}
+        m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
@@ -71,61 +63,36 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _ShadowOffset:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SpecGlossMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _TranslucencyMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
-    - _CircleRadius: 0.69
+    - _CrinkleAmount: 0
     - _Crumple: 0
-    - _Cull: 2
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
+    - _Extrusion: 1.2
+    - _ExtrusionAmount: 10
     - _GlossMapScale: 1
-    - _Glossiness: 0
+    - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _HorizontalNoiseForce: 0.2
-    - _Max: 34.6
+    - _HeightScale: 1
     - _Metallic: 0
-    - _Min: 0.1
     - _Mode: 0
-    - _MorphAmount: 0
-    - _NoiseForce: 0
+    - _NoiseScale: 6.98
     - _OcclusionStrength: 1
-    - _Offset: 0.718
     - _Parallax: 0.02
-    - _Progress: 0
-    - _Radius: 2.16
-    - _Roundness: 1
-    - _Shininess: 0.078125
-    - _Smoothness: 0.0702
+    - _Radius: -0.37
     - _SmoothnessTextureChannel: 0
-    - _Some: 3.6
     - _SpecularHighlights: 1
-    - _SquashAmount: 1
+    - _SphereFactor: 0.632
+    - _SphereRadius: 1
     - _SrcBlend: 1
     - _UVSec: 0
-    - _VerticalNoiseForce: 0.6
-    - _WindQuality: 0
     - _ZWrite: 1
     m_Colors:
-    - _Center: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _CrinkleCenter: {r: 0, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _HueVariation: {r: 1, g: 0.5, b: 0, a: 0.1}
-    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _TreeInstanceColor: {r: 1, g: 1, b: 1, a: 1}
-    - _TreeInstanceScale: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
