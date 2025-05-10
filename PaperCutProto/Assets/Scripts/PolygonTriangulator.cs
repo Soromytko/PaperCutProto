@@ -42,7 +42,7 @@ public class PolygonTriangulator : MonoBehaviour
         var polygonPoints = _points.ToArray();
 
         int[] triangles = Triangulate(polygonPoints);
-        Vector3[] vertices = System.Array.ConvertAll(polygonPoints, v => new Vector3(v.x, v.y, 0));
+        Vector3[] vertices = System.Array.ConvertAll(polygonPoints, v => new Vector3(v.x, 0, v.y));
         Vector2[] uv = createUV(vertices);
 
         Mesh mesh = new Mesh();
