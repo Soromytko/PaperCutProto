@@ -81,6 +81,6 @@ Material:
     - _CapturedCenter: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _ForceDirection: {r: 0, g: 0, b: 0, a: 0}
+    - _ForceDirection: {r: -0.0000035356827, g: 0.0000021731344, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
