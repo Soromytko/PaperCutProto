@@ -6,6 +6,8 @@ using UnityEngine;
 public class Paper : MonoBehaviour
 {
     [SerializeField]private MeshRenderer _meshRenderer;
+    [SerializeField] private PaperFolding _paperFolding;
+
     private AudioSource _audioSource;
     private Material _material;
 
@@ -15,6 +17,7 @@ public class Paper : MonoBehaviour
     [SerializeField] private float _sharpness = 5.0f;
     [SerializeField] private float _deflection = 10.0f;
 
+
     public async Task Move(Vector3 startPosition, Vector3 endPosition, float duration = 1.0f)
     {
         _audioSource.Play();
@@ -23,6 +26,10 @@ public class Paper : MonoBehaviour
 
     public async Task DoOrigami()
     {
+        _meshRenderer.gameObject.SetActive(false);
+        _paperFolding.gameObject.SetActive(true);
+
+        // await _paperFolding.WaitAnimationFinished();
     }
 
     public async Task WaitAnimationFinished()

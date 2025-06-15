@@ -33,6 +33,8 @@ public class LevelLauncher : MonoBehaviour
         await Task.Delay(1000);
         await paper.DoOrigami();
 
+        
+
         // _paper = CreatePaper();
 
         // await _paper.Move(_paperStartPoint.position, _paperEndPoint.position, 0.5f);
