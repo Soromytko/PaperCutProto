@@ -435,6 +435,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _polygon: {fileID: 482608896}
   _polygonPrefab: {fileID: 799615838639954040, guid: e4a7c4338eaea9c4685ffcfc2b87c850, type: 3}
+  _cutState: {fileID: 1782926606}
 --- !u!4 &704204065
 Transform:
   m_ObjectHideFlags: 0
@@ -1345,6 +1346,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a6b2edef882c8645a248a3eb00d4a00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CutPointsChanged:
+    m_PersistentCalls:
+      m_Calls: []
   _pointDistance: 0.03
   _cut: {fileID: 1106127378}
 --- !u!82 &1782926607

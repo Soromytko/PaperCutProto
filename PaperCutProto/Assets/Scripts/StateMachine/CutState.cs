@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(ScissorsSoundPlayer))]
 public class CutState : State
 {
+    public UnityEvent<List<Vector2>> CutPointsChanged;
+
     [SerializeField] private float _pointDistance = 0.1f;
     [SerializeField] private Cut _cut;
 
@@ -61,12 +64,11 @@ public class CutState : State
                 distance -= _pointDistance;
             }
         }
-        
     }
 
     private void Reset()
     {
-        _cutPoints.Clear();
+        ClearCutPoints();
         _cut.Reset();
         _intersectionPointIndeces.Clear();
         _currentPolygon = null;
@@ -82,6 +84,21 @@ public class CutState : State
     private Polygon FindPolygon()
     {
         return _polygonManager.MainPolygon;
+    }
+
+    private void AddCutPoint(Vector2 point)
+    {
+        _cutPoints.Add(point);
+        CutPointsChanged?.Invoke(_cutPoints);
+    }
+
+    private void ClearCutPoints()
+    {
+        if (_cutPoints.Count > 0)
+        {
+            _cutPoints.Clear();
+            CutPointsChanged?.Invoke(_cutPoints);
+        }
     }
 
     private void AddPoint(Vector2 point)
@@ -109,12 +126,12 @@ public class CutState : State
 
         var intersections = _currentPolygonShape.GetIntersectionsByLine(point1, point2);
         if (intersections != null && intersections.Count == 1)
-        {            
+        {
             var intersection = intersections[0];
             _currentPolygonShape.InsertIntersectionPoint(ref intersection);
-            _cutPoints.Add(intersection.Point);
+            AddCutPoint(intersection.Point);
             _intersectionPointIndeces.Add(intersection.StartEdgeIndex + 1);
-            
+
             if (_intersectionPointIndeces.Count == 2)
             {
                 if (_intersectionPointIndeces[0] >= intersection.StartEdgeIndex + 1)
@@ -140,7 +157,7 @@ public class CutState : State
         }
         else if (_intersectionPointIndeces.Count == 1)
         {
-            _cutPoints.Add(_currentPolygon.GetLocalPoint(point));
+            AddCutPoint(_currentPolygon.GetLocalPoint(point));
             _scissorsSoundPlayer.Play();
         }
     }
@@ -190,5 +207,5 @@ public class CutState : State
         }
 
     }
-  
+
 }
