@@ -101,8 +101,68 @@ public class CutState : State
         }
     }
 
+    private void removePoints(int count)
+    {
+        _cut.RemovePoints(count);
+        if (_cutPoints.Count > 0)
+        {
+            int cutPointCount = _cutPoints.Count;
+            int cutCount = Mathf.Clamp(count, 0, _cutPoints.Count);
+            _cutPoints.RemoveRange(_cutPoints.Count - cutCount, cutCount);
+            if (_cutPoints.Count == 0)
+            {
+                _intersectionPointIndeces.Clear();
+            }
+            if (cutPointCount != _cutPoints.Count)
+            {
+                CutPointsChanged?.Invoke(_cutPoints);
+            }
+        }
+    }
+
+    private int getStartPointIndexOfLoop(Vector2 newPoint)
+    {
+        var points = _cut.Points;
+        if (points.Count < 3)
+        {
+            return -1;
+        }
+
+        Vector2 lastPoint = points[points.Count - 1];
+        for (int i = 1; i < points.Count - 1; i++)
+        {
+            Vector2 point1 = points[i - 1];
+            Vector2 point2 = points[i];
+            if (Geometry2DUtils.GetLineIntersection(point1, point2, lastPoint, newPoint) != null)
+            {
+                return i - 1;
+            }
+        }
+
+        return -1;
+    }
+
+    private bool processLoop(Vector2 newPoint)
+    {
+        int index = getStartPointIndexOfLoop(newPoint);
+        if (index < 0)
+        {
+            return false;
+        }
+
+        int countToDelete = _cut.Points.Count - index;
+        removePoints(countToDelete);
+
+        return true;
+    }
+
     private void AddPoint(Vector2 point)
     {
+        if (processLoop(point))
+        {
+            return;
+        }
+
         _cut.AddPoint(point);
 
         if (_currentPolygon == null)

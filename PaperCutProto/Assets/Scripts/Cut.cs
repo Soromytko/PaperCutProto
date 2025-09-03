@@ -24,6 +24,12 @@ public class Cut : MonoBehaviour
         UpdateLineRenderer();
     }
 
+    public void RemovePoints(int count)
+    {
+        int normalizedCount = Mathf.Clamp(count, 0, _points.Count);
+        _points.RemoveRange(_points.Count - normalizedCount, normalizedCount);
+    }
+
     public void Reset()
     {
         _points.Clear();
