@@ -122,7 +122,7 @@ public class PolygonShape
         {
             var edgeStart = _points[i];
             var edgeEnd = _points[(i + 1) % _points.Count];
-            var maybeIntersection = IsLineIntersection(edgeStart, edgeEnd, point1, point2);
+            var maybeIntersection = Geometry2DUtils.GetLineIntersection(edgeStart, edgeEnd, point1, point2);
             if (maybeIntersection != null)
             {
                 Intersection intersection = new Intersection(
@@ -135,37 +135,4 @@ public class PolygonShape
 
         return result;
     }
-
-    public Vector2? IsLineIntersection(Vector2 pointA, Vector2 pointB, Vector2 pointC, Vector2 pointD)
-    {
-        Vector2 b = pointB - pointA; // Вектор AB
-        Vector2 d = pointD - pointC; // Вектор CD
-        
-        // Вычисляем знаменатель (определитель матрицы)
-        float det = b.x * d.y - b.y * d.x;
-        
-        // Если определитель близок к нулю, прямые параллельны или совпадают
-        if (Mathf.Abs(det) < float.Epsilon)
-        {
-            return null; // Пересечения нет
-        }
-        
-        // Вектор от точки A до точки C
-        Vector2 c = pointC - pointA;
-        
-        // Находим параметры t и u
-        float t = (c.x * d.y - c.y * d.x) / det;
-        float u = (c.x * b.y - c.y * b.x) / det;
-        
-        // Проверяем, лежат ли параметры в пределах отрезков
-        if (t >= 0 && t <= 1 && u >= 0 && u <= 1)
-        {
-            // Находим точку пересечения
-            return pointA + t * b;
-        }
-        
-        return null; // Отрезки не пересекаются
-    
-    }
-
 }
