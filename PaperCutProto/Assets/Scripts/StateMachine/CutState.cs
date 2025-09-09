@@ -15,9 +15,11 @@ public class CutState : State
 
     private PolygonManager _polygonManager;
     private Polygon _currentPolygon = null;
-    private PolygonShape _currentPolygonShape = null;
     private List<int> _intersectionPointIndeces = new List<int>();
+    private List<int> _holeIntersectionPointIndeces = new List<int>();
     private List<Vector2> _cutPoints = new List<Vector2>();
+
+    private bool _HasPolygonIntersections => _intersectionPointIndeces.Count > 0;
 
     private ScissorsSoundPlayer _scissorsSoundPlayer;
 
@@ -71,6 +73,7 @@ public class CutState : State
         ClearCutPoints();
         _cut.Reset();
         _intersectionPointIndeces.Clear();
+        _holeIntersectionPointIndeces.Clear();
         _currentPolygon = null;
     }
 
@@ -120,6 +123,19 @@ public class CutState : State
         }
     }
 
+    private Polygon GetCurrentPolygon()
+    {
+        if (_currentPolygon == null)
+        {
+            Polygon newPolygon = FindPolygon();
+            if (newPolygon != null)
+            {
+                _currentPolygon = newPolygon;
+            }
+        }
+        return _currentPolygon;
+    }
+
     private int getStartPointIndexOfLoop(Vector2 newPoint)
     {
         var points = _cut.Points;
@@ -142,6 +158,11 @@ public class CutState : State
         return -1;
     }
 
+    private bool IsLoop(Vector2 newPoint)
+    {
+        return getStartPointIndexOfLoop(newPoint) >= 0;
+    }
+
     private bool processLoop(Vector2 newPoint)
     {
         int index = getStartPointIndexOfLoop(newPoint);
@@ -158,37 +179,41 @@ public class CutState : State
 
     private void AddPoint(Vector2 point)
     {
-        if (processLoop(point))
+        Polygon polygon = GetCurrentPolygon();
+
+        if (_cut.PointCount > 2 && IsLoop(point))
         {
-            return;
+            if (!_HasPolygonIntersections && polygon && polygon.ContainsPoint(point))
+            {
+                ProcessHole(_cut.Points, point);
+                Reset();
+                return;
+            }
+            else
+            {
+                processLoop(point);
+                return;
+            }
         }
 
         _cut.AddPoint(point);
 
-        if (_currentPolygon == null)
-        {
-            Polygon newPolygon = FindPolygon();
-            if (newPolygon != null)
-            {
-                _currentPolygon = newPolygon;
-                _currentPolygonShape = new PolygonShape(newPolygon.Shape.Points);
-            }
-        }
-
         // Process Cut
-        if (_currentPolygon == null || _cut.Points.Count < 2)
+        if (polygon == null || _cut.Points.Count < 2)
         {
             return;
         }
 
-        Vector2 point1 = _currentPolygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 2]);
-        Vector2 point2 = _currentPolygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 1]);
+        Vector2 point1 = polygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 2]);
+        Vector2 point2 = polygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 1]);
 
-        var intersections = _currentPolygonShape.GetIntersectionsByLine(point1, point2);
+        PolygonShape shape = polygon.Shape;
+
+        var intersections = shape.GetIntersectionsByLine(point1, point2);
         if (intersections != null && intersections.Count == 1)
         {
             var intersection = intersections[0];
-            _currentPolygonShape.InsertIntersectionPoint(ref intersection);
+            shape.InsertIntersectionPoint(ref intersection);
             AddCutPoint(intersection.Point);
             _intersectionPointIndeces.Add(intersection.StartEdgeIndex + 1);
 
@@ -202,13 +227,14 @@ public class CutState : State
                 List<Vector2> newVertices = new List<Vector2>();
                 newVertices.AddRange(_cutPoints);
 
-                List<Vector2> firstPolygonPoints = Slice(_cutPoints, false);
-                List<Vector2> secondPolygonPoints = Slice(_cutPoints, true);
+                List<Vector2> firstPolygonPoints = Slice(polygon, _cutPoints, false);
+                List<Vector2> secondPolygonPoints = Slice(polygon, _cutPoints, true);
 
                 var firstShape = new PolygonShape(firstPolygonPoints);
                 var secondShape = new PolygonShape(secondPolygonPoints);
 
-                ProcessSlicedShapes(firstShape, secondShape);
+                var points = ProcessSlicedShapes(firstShape, secondShape);
+                polygon.Shape.SetPoints(points);
 
                 Reset();
                 SwitchState("CompareState");
@@ -217,12 +243,29 @@ public class CutState : State
         }
         else if (_intersectionPointIndeces.Count == 1)
         {
-            AddCutPoint(_currentPolygon.GetLocalPoint(point));
+            AddCutPoint(polygon.GetLocalPoint(point));
             _scissorsSoundPlayer.Play();
         }
     }
 
-    private List<Vector2> Slice(List<Vector2> vertices, bool reverse = false)
+    private void ProcessHole(IReadOnlyList<Vector2> points, Vector2 closingPoint)
+    {
+        int startIndex = getStartPointIndexOfLoop(closingPoint);
+        if (startIndex < 0)
+        {
+            return;
+        }
+
+        Vector2[] holePoints = new Vector2[points.Count - startIndex];
+        for (int i = 0; i < holePoints.Length; i++)
+        {
+            holePoints[i] =  points[i + startIndex];
+        }
+
+        _polygonManager.CreateHolePolygon(holePoints);
+    }
+
+    private List<Vector2> Slice(Polygon polygon, List<Vector2> vertices, bool reverse = false)
     {
         List<Vector2> result = new List<Vector2>();
         result.AddRange(vertices);
@@ -235,20 +278,22 @@ public class CutState : State
         int i = reverse ? _intersectionPointIndeces[0] : _intersectionPointIndeces[1];
         int targetIndex = reverse ? _intersectionPointIndeces[1] : _intersectionPointIndeces[0];
 
+        PolygonShape polygonShape = polygon.Shape;
+
         while (true)
         {
-            i = (i + 1) % _currentPolygonShape.Points.Count;
+            i = (i + 1) % polygonShape.Points.Count;
             if (i == targetIndex)
             {
                 break;
             }
-            result.Add(_currentPolygonShape.Points[i]);
+            result.Add(polygonShape.Points[i]);
         }
 
         return result;
     }
 
-    private void ProcessSlicedShapes(PolygonShape firstShape, PolygonShape secondShape)
+    private IReadOnlyList<Vector2> ProcessSlicedShapes(PolygonShape firstShape, PolygonShape secondShape)
     {
         float firstArea = firstShape.CalculateArea();
         float secondArea = secondShape.CalculateArea();
@@ -256,6 +301,7 @@ public class CutState : State
         PolygonShape shape = firstArea > secondArea ? firstShape : secondShape;
 
         _currentPolygon.Shape.SetPoints(shape.Points);
+        return shape.Points;
     }
 
     private void OnDrawGizmos()
@@ -265,7 +311,6 @@ public class CutState : State
         {
             //Gizmos.DrawSphere(point, 0.01f);
         }
-
     }
 
 }
