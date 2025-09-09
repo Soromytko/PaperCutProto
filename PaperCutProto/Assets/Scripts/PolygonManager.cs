@@ -10,10 +10,12 @@ public class PolygonManager : MonoBehaviour
     public Polygon TargetPolygon => _targetPolygon;
 
     [SerializeField] private Polygon _polygonPrefab;
+    [SerializeField] private Polygon _holePolygonPrefab;
     [SerializeField] private Polygon _mainPolygon;
     [SerializeField] private Polygon _targetPolygon;
 
     private List<Polygon> _polygons = new List<Polygon>();
+    private List<Polygon> _holePolygons = new List<Polygon>();
 
     private void Awake()
     {
@@ -43,6 +45,15 @@ public class PolygonManager : MonoBehaviour
         result.Shape.Points = points.ToList();
         result.transform.parent = transform;
         _polygons.Add(result);
+        return result;
+    }
+
+    public Polygon CreateHolePolygon(Vector2[] points)
+    {
+        Polygon result = Instantiate(_holePolygonPrefab);
+        result.Shape.Points = points.ToList();
+        result.transform.parent = transform;
+        _holePolygons.Add(result);
         return result;
     }
 
