@@ -11,6 +11,12 @@ Shader "Custom/Polygon"
         Tags { "RenderType"="Opaque" }
         LOD 100
 
+        Stencil
+        {
+            Ref 1
+            Comp notequal
+        }
+
         Pass
         {
             CGPROGRAM

@@ -12,7 +12,7 @@ public class Polygon : MonoBehaviour
 
     private void Awake()
     {
-        _shape.PointsChanged.AddListener(OnPointsChanged); 
+        _shape.PointsChanged.AddListener(OnPointsChanged);
         _polygonTriangulator = GetComponent<PolygonTriangulator>();
         OnPointsChanged();
     }
@@ -20,6 +20,12 @@ public class Polygon : MonoBehaviour
     private void OnPointsChanged()
     {
         _polygonTriangulator.Points = new List<Vector2>(_shape.Points);
+    }
+
+    public bool ContainsPoint(Vector2 globalPoint)
+    {
+        Vector2 localPoint = GetLocalPoint(globalPoint);
+        return _shape.IsPointInside(localPoint);
     }
 
     public Vector2 GetLocalPoint(Vector2 globalPoint)

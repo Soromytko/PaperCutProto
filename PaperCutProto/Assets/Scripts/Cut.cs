@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(LineRenderer))]
 public class Cut : MonoBehaviour
 {
-    public List<Vector2> Points => _points;
+    public IReadOnlyList<Vector2> Points => _points;
     public int PointCount => _points.Count;
 
     private List<Vector2> _points = new List<Vector2>();

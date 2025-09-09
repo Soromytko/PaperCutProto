@@ -17,7 +17,10 @@ public class CutState : State
     private Polygon _currentPolygon = null;
     private PolygonShape _currentPolygonShape = new PolygonShape();
     private List<int> _intersectionPointIndeces = new List<int>();
+    private List<int> _holeIntersectionPointIndeces = new List<int>();
     private List<Vector2> _cutPoints = new List<Vector2>();
+
+    private bool _HasPolygonIntersections => _intersectionPointIndeces.Count > 0;
 
     private ScissorsSoundPlayer _scissorsSoundPlayer;
 
@@ -86,6 +89,7 @@ public class CutState : State
         ClearCutPoints();
         _cut.Reset();
         _intersectionPointIndeces.Clear();
+        _holeIntersectionPointIndeces.Clear();
         _currentPolygon = null;
     }
 
@@ -164,6 +168,11 @@ public class CutState : State
         return -1;
     }
 
+    private bool IsLoop(Vector2 newPoint)
+    {
+        return getStartPointIndexOfLoop(newPoint) >= 0;
+    }
+
     private bool processLoop(Vector2 newPoint)
     {
         int index = getStartPointIndexOfLoop(newPoint);
@@ -182,9 +191,19 @@ public class CutState : State
     {
         Polygon polygon = GetCurrentPolygon();
 
-        if (processLoop(point))
+        if (_cut.PointCount > 2 && IsLoop(point))
         {
-            return;
+            if (!_HasPolygonIntersections && polygon && polygon.ContainsPoint(point))
+            {
+                ProcessHole(_cut.Points, point);
+                Reset();
+                return;
+            }
+            else
+            {
+                processLoop(point);
+                return;
+            }
         }
 
         _cut.AddPoint(point);
@@ -271,7 +290,26 @@ public class CutState : State
         float secondArea = secondShape.CalculateArea();
 
         PolygonShape shape = firstArea > secondArea ? firstShape : secondShape;
+
+        _currentPolygon.Shape.SetPoints(shape.Points);
         return shape.Points;
+    }
+
+    private void ProcessHole(IReadOnlyList<Vector2> points, Vector2 closingPoint)
+    {
+        int startIndex = getStartPointIndexOfLoop(closingPoint);
+        if (startIndex < 0)
+        {
+            return;
+        }
+
+        Vector2[] holePoints = new Vector2[points.Count - startIndex];
+        for (int i = 0; i < holePoints.Length; i++)
+        {
+            holePoints[i] = points[i + startIndex];
+        }
+
+        _polygonManager.CreateHolePolygon(holePoints);
     }
 
     private void OnDrawGizmos()
@@ -281,7 +319,6 @@ public class CutState : State
         {
             //Gizmos.DrawSphere(point, 0.01f);
         }
-
     }
 
 }
