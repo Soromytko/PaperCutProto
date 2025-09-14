@@ -255,7 +255,7 @@ public class CutState : State
 
         PolygonShape shape = firstArea > secondArea ? firstShape : secondShape;
 
-        _currentPolygon.Shape.Points = shape.Points;
+        _currentPolygon.Shape.SetPoints(shape.Points);
     }
 
     private void OnDrawGizmos()

@@ -19,7 +19,7 @@ public class Polygon : MonoBehaviour
 
     private void OnPointsChanged()
     {
-        _polygonTriangulator.Points = _shape.Points;    
+        _polygonTriangulator.Points = new List<Vector2>(_shape.Points);
     }
 
     public Vector2 GetLocalPoint(Vector2 globalPoint)

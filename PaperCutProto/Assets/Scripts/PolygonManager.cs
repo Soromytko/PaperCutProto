@@ -40,7 +40,7 @@ public class PolygonManager : MonoBehaviour
     public Polygon CreatePolygon(Vector2[] points)
     {
         Polygon result = Instantiate(_polygonPrefab);
-        result.Shape.Points = points.ToList();
+        result.Shape.SetPoints(points);
         result.transform.parent = transform;
         _polygons.Add(result);
         return result;

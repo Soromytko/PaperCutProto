@@ -20,6 +20,6 @@ public class CompareState : State
 
     private float Compare(PolygonShape firstShape, PolygonShape secondShape)
     {
-        return HausdorffDistance.Compare(firstShape.Points.ToArray(), secondShape.Points.ToArray());
+        return HausdorffDistance.Compare(firstShape.Points, secondShape.Points);
     }
 }

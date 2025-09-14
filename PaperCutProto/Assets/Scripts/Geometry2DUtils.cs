@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class Geometry2DUtils
@@ -25,5 +26,43 @@ public static class Geometry2DUtils
         }
 
         return null;
+    }
+
+    public enum WindingOrder
+    {
+        Clockwise,
+        Counterclockwise,
+        Collinear,
+        Degenerate,
+    }
+
+    public static WindingOrder GetPointWindingOrder(IReadOnlyList<Vector2> points)
+    {
+        if (points == null || points.Count < 2)
+        {
+            return WindingOrder.Collinear;
+        }
+
+        double area = 0;
+        int n = points.Count;
+
+        for (int i = 0; i < n; i++)
+        {
+            Vector2 current = points[i];
+            Vector2 next = points[(i + 1) % n];
+            area += (current.x * next.y) - (next.x * current.y);
+        }
+
+        area /= 2;
+
+        if (area > 0)
+        {
+            return WindingOrder.Counterclockwise;
+        }
+        else if (area < 0)
+        {
+            return WindingOrder.Clockwise;
+        }
+        return WindingOrder.Degenerate;
     }
 }

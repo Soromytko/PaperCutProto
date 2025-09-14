@@ -41,7 +41,7 @@ public class SnowflakeFigureProjection : FigureProjection
     {
         foreach (var polygon in _polygons)
         {
-            polygon.Shape.Points = shape.Points;
+            polygon.Shape.SetPoints(shape.Points);
         }
     }
 

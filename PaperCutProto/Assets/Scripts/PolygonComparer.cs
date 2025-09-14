@@ -1,15 +1,16 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class HausdorffDistance
 {
-    public static float Compare(Vector2[] firstPolygon, Vector2[] secondPolygon)
+    public static float Compare(IReadOnlyList<Vector2> firstPolygon, IReadOnlyList<Vector2> secondPolygon)
     {
         float maxDistA = GetDirectedHausdorff(firstPolygon, secondPolygon);
         float maxDistB = GetDirectedHausdorff(secondPolygon, firstPolygon);
         return Mathf.Max(maxDistA, maxDistB);   
     }
 
-    private static float GetDirectedHausdorff(Vector2[] polyA, Vector2[] polyB)
+    private static float GetDirectedHausdorff(IReadOnlyList<Vector2> polyA, IReadOnlyList<Vector2> polyB)
     {
         float maxDist = 0f;
         foreach (Vector2 pointA in polyA)
