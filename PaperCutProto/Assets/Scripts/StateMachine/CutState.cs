@@ -74,13 +74,6 @@ public class CutState : State
         _currentPolygon = null;
     }
 
-    private bool IsRight(Vector2 pointA, Vector2 pointB, Vector2 pointC)
-    {
-        Vector3 v1 = pointC - pointA;
-        Vector3 v2 = pointC - pointB;
-        return Vector3.Cross(v1, v2).z < 0;
-    }
-
     private Polygon FindPolygon()
     {
         return _polygonManager.MainPolygon;
