@@ -1,9 +1,11 @@
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
 
 public class SnowflakeFigureProjection : FigureProjection
 {
+    [SerializeField] private int _layer;
     private Polygon[] _polygons;
     private LineRenderer[] _lineRenderers;
 
@@ -20,6 +22,7 @@ public class SnowflakeFigureProjection : FigureProjection
                 Polygon result = Instantiate(_polygonPrefab);
                 result.transform.parent = transform;
                 result.transform.localPosition = Vector3.zero;
+                result.gameObject.layer = _layer;
 
                 float angle = 360f / 12f * index;
                 result.transform.eulerAngles = new Vector3(0f, 0f, angle);
