@@ -21,6 +21,8 @@ public class CutState : State
 
     private ScissorsSoundPlayer _scissorsSoundPlayer;
 
+    private Stack<List<Vector2>> _polygonPointsStack = new Stack<List<Vector2>>();
+
     private void Awake()
     {
         _polygonManager = FindAnyObjectByType<PolygonManager>();
@@ -62,6 +64,19 @@ public class CutState : State
                 AddPoint(_lastCursorPosition + cursorDirection * _pointDistance);
                 _lastCursorPosition += cursorDirection * _pointDistance;
                 distance -= _pointDistance;
+            }
+        }
+    }
+
+    public void Undo()
+    {
+        if (_polygonPointsStack.Count > 0)
+        {
+            List<Vector2> points = _polygonPointsStack.Pop();
+            Polygon polygon = GetCurrentPolygon();
+            if (polygon != null)
+            {
+                polygon.Shape.SetPoints(points);
             }
         }
     }
@@ -209,6 +224,7 @@ public class CutState : State
                 var secondShape = new PolygonShape(secondPolygonPoints);
 
                 var points = ProcessSlicedShapes(firstShape, secondShape);
+                _polygonPointsStack.Push(new List<Vector2>(polygon.Shape.Points));
                 polygon.Shape.SetPoints(points);
 
                 Reset();
