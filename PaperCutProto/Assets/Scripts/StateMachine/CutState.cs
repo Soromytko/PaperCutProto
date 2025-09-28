@@ -15,7 +15,7 @@ public class CutState : State
 
     private PolygonManager _polygonManager;
     private Polygon _currentPolygon = null;
-    private PolygonShape _currentPolygonShape = new PolygonShape();
+    private PolygonShape _draftPolygonShape = new PolygonShape();
     private List<int> _intersectionPointIndeces = new List<int>();
     private List<int> _holeIntersectionPointIndeces = new List<int>();
     private List<Vector2> _cutPoints = new List<Vector2>();
@@ -139,7 +139,7 @@ public class CutState : State
             Polygon newPolygon = FindPolygon();
             if (newPolygon != _currentPolygon && newPolygon != null)
             {
-                _currentPolygonShape.SetPoints(newPolygon.Shape.Points);
+                _draftPolygonShape.SetPoints(newPolygon.Shape.Points);
             }
             _currentPolygon = newPolygon;
         }
@@ -213,16 +213,16 @@ public class CutState : State
             return;
         }
 
-        PolygonShape polygonShape = _currentPolygonShape;
+        PolygonShape draftPolygonShape = _draftPolygonShape;
 
         Vector2 point1 = polygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 2]);
         Vector2 point2 = polygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 1]);
 
-        var intersections = polygonShape.GetIntersectionsByLine(point1, point2);
+        var intersections = draftPolygonShape.GetIntersectionsByLine(point1, point2);
         if (intersections != null && intersections.Count == 1)
         {
             var intersection = intersections[0];
-            polygonShape.InsertIntersectionPoint(ref intersection);
+            draftPolygonShape.InsertIntersectionPoint(ref intersection);
             AddCutPoint(intersection.Point);
             _intersectionPointIndeces.Add(intersection.StartEdgeIndex + 1);
 
@@ -236,8 +236,8 @@ public class CutState : State
                 List<Vector2> newVertices = new List<Vector2>();
                 newVertices.AddRange(_cutPoints);
 
-                List<Vector2> firstPolygonPoints = Slice(polygonShape, _cutPoints, false);
-                List<Vector2> secondPolygonPoints = Slice(polygonShape, _cutPoints, true);
+                List<Vector2> firstPolygonPoints = Slice(draftPolygonShape, _cutPoints, false);
+                List<Vector2> secondPolygonPoints = Slice(draftPolygonShape, _cutPoints, true);
 
                 var firstShape = new PolygonShape(firstPolygonPoints);
                 var secondShape = new PolygonShape(secondPolygonPoints);
