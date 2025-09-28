@@ -291,7 +291,6 @@ public class CutState : State
 
         PolygonShape shape = firstArea > secondArea ? firstShape : secondShape;
 
-        _currentPolygon.Shape.SetPoints(shape.Points);
         return shape.Points;
     }
 
