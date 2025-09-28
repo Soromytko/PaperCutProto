@@ -123,23 +123,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Sticky
+      name: Sticky_0
       rect:
         serializedVersion: 2
-        x: 244
-        y: 276
-        width: 470
-        height: 528
+        x: 44
+        y: 35
+        width: 195
+        height: 219
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 67d19c0309c03e74a84e56ad239f6569
-      internalID: 1574749534
+      spriteID: f4cd29d2352e7e145886a069ca1e1c2f
+      internalID: 920749885
       vertices: []
       indices: 
       edges: []
@@ -158,7 +158,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Sticky: 1574749534
+      Sticky_0: 920749885
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
