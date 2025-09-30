@@ -6,14 +6,15 @@ using System.Collections.Generic;
 public class SnowflakeFigureProjection : FigureProjection
 {
     [SerializeField] private int _layer;
+    [SerializeField] private DottedLine _dottedLinePrefab;
     private Polygon[] _polygons;
-    private LineRenderer[] _lineRenderers;
+    private DottedLine[] _dottedLines;
 
     private void Awake()
     {
         Init();
 
-        _lineRenderers = new LineRenderer[12];
+        _dottedLines = new DottedLine[12];
 
         _polygons = Enumerable
             .Range(0, 12)
@@ -30,11 +31,13 @@ public class SnowflakeFigureProjection : FigureProjection
                 float xScale = i % 2 != 0 ? -1 : 1;
                 result.transform.localScale = new Vector3(xScale, 1, 1);
 
-                var lineRenderer = result.gameObject.AddComponent(typeof(LineRenderer)) as LineRenderer;
-                lineRenderer.startWidth = 0.01f;
-                lineRenderer.endWidth = 0.01f;
-                lineRenderer.useWorldSpace = false;
-                _lineRenderers[index] = lineRenderer;
+                var dottedLine = Instantiate(_dottedLinePrefab);
+                dottedLine.transform.parent = result.transform;
+                dottedLine.transform.localPosition = Vector3.zero;
+                dottedLine.transform.localRotation= Quaternion.identity;
+                dottedLine.transform.localScale = Vector3.one;
+                dottedLine.GetComponent<LineRenderer>().useWorldSpace = false;
+                _dottedLines[i] = dottedLine;
 
                 return result;
             }).ToArray();
@@ -48,13 +51,11 @@ public class SnowflakeFigureProjection : FigureProjection
         }
     }
 
-    protected override void OnPolygonCutPointsChanged(List<Vector2> cutPoints)
+    protected override void OnPolygonCutPointsChanged(List<Vector2> points)
     {
-        var points = System.Array.ConvertAll(cutPoints.ToArray(), v => new Vector3(v.x, v.y, -1.0f));
-        foreach (var lineRenderer in _lineRenderers)
+        foreach (var dottedLine in _dottedLines)
         {
-            lineRenderer.positionCount = points.Length;
-            lineRenderer.SetPositions(points);
+            dottedLine.SetPoints(points);
         }
     }
 }
