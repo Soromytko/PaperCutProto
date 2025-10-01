@@ -9,6 +9,7 @@ public class CutState : State
     public UnityEvent<List<Vector2>> CutPointsChanged;
 
     [SerializeField] private float _pointDistance = 0.1f;
+    [SerializeField] private float _rawHoleDistance = 0.2f;
     [SerializeField] private Cut _cut;
 
     private Vector2 _lastCursorPosition;
@@ -191,24 +192,32 @@ public class CutState : State
     {
         Polygon polygon = GetCurrentPolygon();
 
+        if (ProcessHole(polygon, _cut.Points, point))
+        {
+            Reset();
+            SwitchState("CompareState");
+            return;
+        }
+
         if (_cut.PointCount > 2 && IsLoop(point))
         {
-            if (!_HasPolygonIntersections && polygon && polygon.ContainsPoint(point))
-            {
-                ProcessHole(_cut.Points, point);
-                Reset();
-                return;
-            }
-            else
-            {
-                processLoop(point);
-                return;
-            }
+            processLoop(point);
+            return;
         }
 
         _cut.AddPoint(point);
 
-        if (polygon == null || _cut.Points.Count < 2)
+        if (polygon == null)
+        {
+            return;
+        }
+
+        if (polygon.ContainsPoint(point))
+        {
+            _scissorsSoundPlayer.Play();
+        }
+
+        if (_cut.Points.Count < 2)
         {
             return;
         }
@@ -254,7 +263,6 @@ public class CutState : State
         else if (_intersectionPointIndeces.Count == 1)
         {
             AddCutPoint(polygon.GetLocalPoint(point));
-            _scissorsSoundPlayer.Play();
         }
     }
 
@@ -294,21 +302,41 @@ public class CutState : State
         return shape.Points;
     }
 
-    private void ProcessHole(IReadOnlyList<Vector2> points, Vector2 closingPoint)
+    private int FindNearestPointIndex(IReadOnlyList<Vector2> points, Vector2 newPoint, float minDistance, int skip = 3)
     {
-        int startIndex = getStartPointIndexOfLoop(closingPoint);
-        if (startIndex < 0)
+        for (int i = 0; i < points.Count - skip; i++)
         {
-            return;
+            var currentPoint = points[i];
+            float currentDistance = Vector2.Distance(newPoint, currentPoint);
+            if (currentDistance <= minDistance)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private bool ProcessHole(Polygon polygon, IReadOnlyList<Vector2> points, Vector2 newPoint)
+    {
+        if (points.Count < 3 || _HasPolygonIntersections || !polygon || !polygon.ContainsPoint(newPoint))
+        {
+            return false;
         }
 
-        Vector2[] holePoints = new Vector2[points.Count - startIndex];
+        int nearestPointIndex = FindNearestPointIndex(points, newPoint, _rawHoleDistance);
+        if (nearestPointIndex < 0)
+        {
+            return false;
+        }
+
+        Vector2[] holePoints = new Vector2[points.Count - nearestPointIndex];
         for (int i = 0; i < holePoints.Length; i++)
         {
-            holePoints[i] = points[i + startIndex];
+            holePoints[i] = points[i + nearestPointIndex];
         }
 
         _polygonManager.CreateHolePolygon(holePoints);
+        return true;
     }
 
     private void OnDrawGizmos()
