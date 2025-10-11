@@ -1,11 +1,13 @@
-using System.Linq;
+using NUnit.Framework;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class PolygonManager : MonoBehaviour
 {
     public List<Polygon> Polygons => _polygons;
+    public IReadOnlyList<Polygon> HolePolygons => _holePolygons.AsReadOnly();
     public Polygon MainPolygon => _mainPolygon;
     public Polygon TargetPolygon => _targetPolygon;
 

@@ -1,7 +1,10 @@
+using NUnit.Framework.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.TerrainUtils;
 
 [RequireComponent(typeof(ScissorsSoundPlayer))]
 public class CutState : State
@@ -26,6 +29,25 @@ public class CutState : State
     private ScissorsSoundPlayer _scissorsSoundPlayer;
 
     private Stack<List<Vector2>> _polygonPointsStack = new Stack<List<Vector2>>();
+
+    class AffectedHole
+    {
+        public AffectedHole(Polygon holePolygon)
+        {
+            _holePolygon = holePolygon;
+            _copyOfHolePolygonShape = new PolygonShape(_holePolygon.Shape.Points);
+        }
+
+        public Polygon HolePolygon => _holePolygon;
+        public PolygonShape CopyOfHolePolygonShape => _copyOfHolePolygonShape;
+        public List<int> IntersectionPointIndeces => _intersectionPointIndeces;
+
+        private Polygon _holePolygon;
+        private PolygonShape _copyOfHolePolygonShape;
+        private List<int> _intersectionPointIndeces = new List<int>();
+    }
+
+    private Dictionary<Polygon, AffectedHole> _affectedHoles = new Dictionary<Polygon, AffectedHole>();
 
     private void Awake()
     {
@@ -92,6 +114,7 @@ public class CutState : State
         _intersectionPointIndeces.Clear();
         _holeIntersectionPointIndeces.Clear();
         _currentPolygon = null;
+        _affectedHoles.Clear();
     }
 
     private Polygon FindPolygon()
@@ -224,9 +247,30 @@ public class CutState : State
 
         PolygonShape draftPolygonShape = _draftPolygonShape;
 
-        Vector2 point1 = polygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 2]);
-        Vector2 point2 = polygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 1]);
+        Vector2 lastCutPoint1 = _cut.Points[_cut.Points.Count - 1];
+        Vector2 lastCutPoint2 = _cut.Points[_cut.Points.Count - 2];
 
+        foreach (var holePolygon in _polygonManager.HolePolygons)
+        {
+            Vector2 localPoint1 = holePolygon.GetLocalPoint(lastCutPoint1);
+            Vector2 localPoint2 = holePolygon.GetLocalPoint(lastCutPoint2);
+
+            var holeIntersections = holePolygon.GetIntersectionsByLine(localPoint1, localPoint2);
+            if (holeIntersections != null && holeIntersections.Count > 0)
+            {
+                var holeIntersection = holeIntersections[0];
+                if (!_affectedHoles.ContainsKey(holePolygon))
+                {
+                    _affectedHoles[holePolygon] = new AffectedHole(holePolygon);
+                }
+                AffectedHole affectedHole = _affectedHoles[holePolygon];
+                affectedHole.IntersectionPointIndeces.Add(holeIntersection.StartEdgeIndex);
+                affectedHole.CopyOfHolePolygonShape.InsertIntersectionPoint(ref holeIntersection);
+            }
+        }
+
+        Vector2 point1 = polygon.GetLocalPoint(lastCutPoint1);
+        Vector2 point2 = polygon.GetLocalPoint(lastCutPoint2);
         var intersections = draftPolygonShape.GetIntersectionsByLine(point1, point2);
         if (intersections != null && intersections.Count == 1)
         {
