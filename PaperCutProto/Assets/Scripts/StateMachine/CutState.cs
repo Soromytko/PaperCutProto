@@ -224,8 +224,8 @@ public class CutState : State
 
         PolygonShape draftPolygonShape = _draftPolygonShape;
 
-        Vector2 point1 = polygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 2]);
-        Vector2 point2 = polygon.GetLocalPoint(_cut.Points[_cut.Points.Count - 1]);
+        Vector2 point1 = polygon.ConvertGlobalToLocalPoint(_cut.Points[_cut.Points.Count - 2]);
+        Vector2 point2 = polygon.ConvertGlobalToLocalPoint(_cut.Points[_cut.Points.Count - 1]);
 
         var intersections = draftPolygonShape.GetIntersectionsByLine(point1, point2);
         if (intersections != null && intersections.Count == 1)
@@ -262,7 +262,7 @@ public class CutState : State
         }
         else if (_intersectionPointIndeces.Count == 1)
         {
-            AddCutPoint(polygon.GetLocalPoint(point));
+            AddCutPoint(polygon.ConvertGlobalToLocalPoint(point));
         }
     }
 
@@ -335,7 +335,8 @@ public class CutState : State
             holePoints[i] = points[i + nearestPointIndex];
         }
 
-        _polygonManager.CreateHolePolygon(holePoints);
+        Polygon hole = _polygonManager.CreateHolePolygon(holePoints);
+
         return true;
     }
 

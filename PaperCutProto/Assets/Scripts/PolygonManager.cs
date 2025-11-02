@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 public class PolygonManager : MonoBehaviour
 {
     public List<Polygon> Polygons => _polygons;
+    public IReadOnlyList<Polygon> HolePolygons => _holePolygons.AsReadOnly();
     public Polygon MainPolygon => _mainPolygon;
     public Polygon TargetPolygon => _targetPolygon;
 
@@ -29,7 +30,7 @@ public class PolygonManager : MonoBehaviour
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
-    
+
     public void SetMainPolygon(Polygon polygon)
     {
         if (!_polygons.Contains(polygon))
@@ -48,19 +49,19 @@ public class PolygonManager : MonoBehaviour
         return result;
     }
 
-    public Polygon CreateHolePolygon(Vector2[] points)
+    public Polygon CreateHolePolygon(Vector2[] points, bool merge = true)
     {
-        Polygon result = Instantiate(_holePolygonPrefab);
-        result.Shape.SetPoints(points.ToList());
-        result.transform.parent = transform;
-        _holePolygons.Add(result);
-        return result;
+        Polygon hole = Instantiate(_holePolygonPrefab);
+        hole.Shape.SetPoints(points.ToList());
+        hole.transform.parent = transform;
+        _holePolygons.Add(hole);
+        return merge ? MergeHoles(hole) : hole;
     }
 
     public void DeletePolygon(Polygon polygon)
     {
         bool isMainPolygon = polygon == _mainPolygon;
-        
+
         _polygons.Remove(polygon);
         Destroy(polygon.gameObject);
 
@@ -68,6 +69,43 @@ public class PolygonManager : MonoBehaviour
         {
             _mainPolygon = _polygons.Count > 0 ? _polygons[0] : null;
         }
+    }
+
+    private Polygon MergeHoles(Polygon hole)
+    {
+        Debug.Assert(hole != null);
+        for (int i = 0; i < _holePolygons.Count; i++)
+        {
+            var currentHole = _holePolygons[i];
+            if (hole == currentHole)
+            {
+                continue;
+            }
+            var polygonRelation = hole.DeterminePolygonRelation(currentHole);
+
+            if (polygonRelation == Polygon.Relation.Intersection)
+            {
+                if (hole.Merge(currentHole))
+                {
+                    _holePolygons.RemoveAt(i);
+                    Destroy(currentHole.gameObject);
+                    i--;
+                }
+            }
+            else if (polygonRelation == Polygon.Relation.Within)
+            {
+                Destroy(hole.gameObject);
+                return currentHole;
+            }
+            else if (polygonRelation == Polygon.Relation.Outside)
+            {
+                Destroy(currentHole.gameObject);
+                _holePolygons.RemoveAt(i);
+                i--;
+            }
+        }
+
+        return hole;
     }
 
 }
