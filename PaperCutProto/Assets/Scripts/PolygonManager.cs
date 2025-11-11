@@ -60,6 +60,14 @@ public class PolygonManager : MonoBehaviour
 
     public void DeletePolygon(Polygon polygon)
     {
+        if (!_polygons.Contains(polygon))
+        {
+            Debug.Assert(_holePolygons.Contains(polygon));
+            _holePolygons.Remove(polygon);
+            Destroy(polygon.gameObject);
+            return;
+        }
+
         bool isMainPolygon = polygon == _mainPolygon;
 
         _polygons.Remove(polygon);

@@ -3,20 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-public struct Intersection
-{
-    public Intersection(Vector2 point, int startEdgeIndex, int endEdgeIndex)
-    {
-        Point = point;
-        StartEdgeIndex = startEdgeIndex;
-        EndEdgeIndex = endEdgeIndex;
-    }
-
-    public Vector2 Point { get; }
-    public int StartEdgeIndex { get; }
-    public int EndEdgeIndex { get; }
-}
-
 [System.Serializable]
 public class PolygonShape
 {
@@ -27,6 +13,20 @@ public class PolygonShape
     [Tooltip("Min distance between vertices for simplification")]
     [SerializeField] private float _simplifyTolerance = 0.03f;
     [SerializeField] private List<Vector2> _points = new List<Vector2>();
+
+    public struct IntersectionInfo
+    {
+        public IntersectionInfo(Vector2 point, int startEdgeIndex, int endEdgeIndex)
+        {
+            Point = point;
+            StartEdgeIndex = startEdgeIndex;
+            EndEdgeIndex = endEdgeIndex;
+        }
+
+        public Vector2 Point { get; }
+        public int StartEdgeIndex { get; }
+        public int EndEdgeIndex { get; }
+    }
 
     public PolygonShape()
     {
@@ -169,12 +169,12 @@ public class PolygonShape
         return intersectCount % 2 != 0;
     }
 
-    public List<Intersection> GetIntersectionsByLine(Vector2 firstLocalPoint, Vector2 secondLocalPoint)
+    public List<IntersectionInfo> GetIntersectionsByLine(Vector2 firstLocalPoint, Vector2 secondLocalPoint)
     {
         Vector2 point1 = firstLocalPoint;
         Vector2 point2 = secondLocalPoint;
 
-        List<Intersection> result = new List<Intersection>();
+        List<IntersectionInfo> result = new List<IntersectionInfo>();
 
         for (int i = 0; i < _points.Count; i++)
         {
@@ -183,7 +183,7 @@ public class PolygonShape
             var maybeIntersection = Geometry2DUtils.GetLineIntersection(edgeStart, edgeEnd, point1, point2);
             if (maybeIntersection != null)
             {
-                Intersection intersection = new Intersection(
+                IntersectionInfo intersection = new IntersectionInfo(
                     (Vector2)maybeIntersection,
                     i,
                     (i + 1) % Points.Count);

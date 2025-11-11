@@ -1,7 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.SymbolStore;
+using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UIElements;
+using UnityEngine.Video;
+using static PolygonShape;
 
 [RequireComponent(typeof(ScissorsSoundPlayer))]
 public class CutState : State
@@ -20,6 +26,7 @@ public class CutState : State
     private List<int> _intersectionPointIndeces = new List<int>();
     private List<int> _holeIntersectionPointIndeces = new List<int>();
     private List<Vector2> _cutPoints = new List<Vector2>();
+    private List<Polygon> _affectedHoles = new List<Polygon>();
 
     private bool _HasPolygonIntersections => _intersectionPointIndeces.Count > 0;
 
@@ -51,7 +58,7 @@ public class CutState : State
         }
         else if (Input.GetMouseButtonUp(0))
         {
-            Reset();
+            RestCutState();
         }
 
         if (!Input.GetMouseButton(0))
@@ -85,12 +92,13 @@ public class CutState : State
         }
     }
 
-    private void Reset()
+    private void RestCutState()
     {
         ClearCutPoints();
         _cut.Reset();
         _intersectionPointIndeces.Clear();
         _holeIntersectionPointIndeces.Clear();
+        _affectedHoles.Clear();
         _currentPolygon = null;
     }
 
@@ -188,7 +196,7 @@ public class CutState : State
         return true;
     }
 
-    private void InsertIntersectionPoint(PolygonShape shape, ref Intersection intersection)
+    private void InsertIntersectionPoint(PolygonShape shape, ref IntersectionInfo intersection)
     {
         Debug.Assert(shape != null);
         var points = new List<Vector2>(shape.Points);
@@ -202,7 +210,7 @@ public class CutState : State
 
         if (ProcessHole(polygon, _cut.Points, point))
         {
-            Reset();
+            RestCutState();
             SwitchState("CompareState");
             return;
         }
@@ -250,17 +258,44 @@ public class CutState : State
                     _intersectionPointIndeces[0]++;
                 }
 
-                List<Vector2> firstPolygonPoints = Slice(draftPolygonShape, _cutPoints, false);
-                List<Vector2> secondPolygonPoints = Slice(draftPolygonShape, _cutPoints, true);
+                PolygonShape firstShape;
+                PolygonShape secondShape;
 
-                var firstShape = new PolygonShape(firstPolygonPoints);
-                var secondShape = new PolygonShape(secondPolygonPoints);
+                var sliceLine = new SliceLine
+                {
+                    startIndex = _intersectionPointIndeces[0],
+                    endIndex = _intersectionPointIndeces[1],
+                    CutPoints = _cutPoints.AsReadOnly()
+                };
+                var (sliceLines, affectedHoles) = CalculateSliceLineVariants(draftPolygonShape, polygon.transform.position, _cutPoints.AsReadOnly());
+                Debug.Assert(sliceLines != null && sliceLines.Count > 0);
+
+                if (sliceLines.Count == 1)
+                {
+                    sliceLine.CutPoints = sliceLines[0].AsReadOnly();
+                    (firstShape, secondShape) = Slice(draftPolygonShape, ref sliceLine, SliceType.Both);
+                }
+                else
+                {
+                    sliceLine.CutPoints = sliceLines[0].AsReadOnly();
+                    firstShape = Slice(draftPolygonShape, ref sliceLine, SliceType.Left).Item1;
+                    sliceLine.CutPoints = sliceLines[1].AsReadOnly();
+                    secondShape = Slice(draftPolygonShape, ref sliceLine, SliceType.Right).Item2;
+                }
 
                 var points = ProcessSlicedShapes(firstShape, secondShape);
                 _polygonPointsStack.Push(new List<Vector2>(polygon.Shape.Points));
                 polygon.Shape.SetPoints(points);
 
-                Reset();
+                if (affectedHoles != null && affectedHoles.Count > 0)
+                {
+                    foreach (var hole in affectedHoles)
+                    {
+                        _polygonManager.DeletePolygon(hole);
+                    }
+                }
+
+                RestCutState();
                 SwitchState("CompareState");
                 return;
             }
@@ -271,27 +306,159 @@ public class CutState : State
         }
     }
 
-    private List<Vector2> Slice(PolygonShape polygonShape, List<Vector2> vertices, bool reverse = false)
+    private (List<List<Vector2>>, HashSet<Polygon>) CalculateSliceLineVariants(PolygonShape polygonShape, Vector2 pos, IReadOnlyList<Vector2> localCutLine)
     {
-        List<Vector2> result = new List<Vector2>();
-        result.AddRange(vertices);
+        Debug.Assert(polygonShape != null);
+        Debug.Assert(localCutLine != null && localCutLine.Count > 0);
 
-        if (reverse)
+        Vector2 ConvertToLocal(Vector2 globalPoint) { return globalPoint - pos; }
+        Vector2 ConvertToGlobal(Vector2 localPoint) { return localPoint + pos; }
+
+        List<List<Vector2>> sliceLines = new List<List<Vector2>> { new List<Vector2>() };
+        sliceLines[0].Add(localCutLine[0]);
+
+        var affectedHoles = new HashSet<Polygon>();
+
+        for (int i = 1; i < localCutLine.Count; i++)
         {
-            result.Reverse();
+            var point1 = localCutLine[i - 1];
+            var point2 = localCutLine[i];
+            var intersectionsWithHoles = FindIntersectionWithHoles(ConvertToGlobal(point1), ConvertToGlobal(point2));
+            Debug.Assert(intersectionsWithHoles != null);
+            if (intersectionsWithHoles.Count == 0)
+            {
+                sliceLines.ForEach(list => list.Add(point2));
+                continue;
+            }
+            else if (sliceLines.Count == 1)
+            {
+                sliceLines.Add(new List<Vector2>(sliceLines[0]));
+            }
+            Debug.Assert(sliceLines.Count == 2);
+
+            // We don't handle the case where the number of holes is greater than 1,
+            // because we assume this case will not happen.
+            Debug.Assert(intersectionsWithHoles.Count == 1);
+
+            var holePolygon = intersectionsWithHoles.Keys.ToArray()[0];
+            var firstHoleIntersectionInfo = intersectionsWithHoles[holePolygon].ToArray()[0];
+            Debug.Assert(holePolygon != null);
+
+            Debug.Assert(affectedHoles != null);
+            affectedHoles.Add(holePolygon);
+
+            IntersectionInfo? maybeSecondHoleIntersectionInfo = null;
+            for (int j = i + 1; j < localCutLine.Count; j++)
+            {
+                var point11 = ConvertToGlobal(localCutLine[j - 1]);
+                var point22 = ConvertToGlobal(localCutLine[j]);
+                var holeIntersections = holePolygon.GetIntersectionsByLine(point11, point22);
+                Debug.Assert(holeIntersections != null);
+                if (holeIntersections.Count != 0)
+                {
+                    maybeSecondHoleIntersectionInfo = holeIntersections[0];
+                    i = j;
+                    break;
+                }
+            }
+            Debug.Assert(maybeSecondHoleIntersectionInfo != null);
+            IntersectionInfo secondHoleIntersectionInfo = maybeSecondHoleIntersectionInfo.Value;
+
+            int holeLength = holePolygon.Shape.Points.Count();
+
+            // The left side of the hole.
+            int holePointIndex = firstHoleIntersectionInfo.EndEdgeIndex;
+            var firstLine = sliceLines[0];
+            while (holePointIndex != maybeSecondHoleIntersectionInfo.Value.StartEdgeIndex)
+            {
+                var globalHolePoint = holePolygon.GetGlobalShapePoint(holePointIndex);
+                firstLine.Add(ConvertToLocal(globalHolePoint));
+                holePointIndex = (holePointIndex + 1) % holeLength;
+            }
+            firstLine.Add(ConvertToLocal(holePolygon.ConvertLocalToGlobalPoint(secondHoleIntersectionInfo.Point)));
+
+            // The rigth side of the hole.
+            holePointIndex = firstHoleIntersectionInfo.StartEdgeIndex;
+            var secondLine = sliceLines[1];
+            while (holePointIndex != maybeSecondHoleIntersectionInfo.Value.EndEdgeIndex)
+            {
+                var globalHolePoint = holePolygon.GetGlobalShapePoint(holePointIndex);
+                secondLine.Add(ConvertToLocal(globalHolePoint));
+                holePointIndex = (holePointIndex - 1 + holeLength) % holeLength;
+            }
+            firstLine.Add(ConvertToLocal(holePolygon.ConvertLocalToGlobalPoint(secondHoleIntersectionInfo.Point)));
         }
 
-        int i = reverse ? _intersectionPointIndeces[0] : _intersectionPointIndeces[1];
-        int targetIndex = reverse ? _intersectionPointIndeces[1] : _intersectionPointIndeces[0];
+        return (sliceLines, affectedHoles);
+    }
 
-        while (true)
+    enum SliceType
+    {
+        Left, Right, Both,
+    }
+
+    struct SliceLine
+    {
+        public int startIndex;
+        public int endIndex;
+        public IReadOnlyList<Vector2> CutPoints;
+    }
+
+    private (PolygonShape, PolygonShape) Slice(PolygonShape polygonShape, ref SliceLine sliceLine, SliceType sliceType)
+    {
+        PolygonShape firstShape = null;
+        PolygonShape secondShape = null;
+
+        var polygonPoints = polygonShape.Points;
+
+        int IncreaseIndex(int index, int count) { return (index + 1) % count; }
+        int DecreaseIndex(int index, int count) { return (index - 1 + count) % count; }
+
+        if (sliceType == SliceType.Left || sliceType == SliceType.Both)
         {
-            i = (i + 1) % polygonShape.Points.Count;
-            if (i == targetIndex)
+            List<Vector2> points = new List<Vector2>(sliceLine.CutPoints);
+            int i = DecreaseIndex(sliceLine.endIndex, polygonPoints.Count);
+            while (i != sliceLine.startIndex)
             {
-                break;
+                points.Add(polygonPoints[i]);
+                i = DecreaseIndex(i, polygonPoints.Count);
             }
-            result.Add(polygonShape.Points[i]);
+            points.Reverse();
+            firstShape = new PolygonShape(points);
+        }
+
+        if (sliceType == SliceType.Right || sliceType == SliceType.Both)
+        {
+            List<Vector2> points = new List<Vector2>(sliceLine.CutPoints);
+            int i = IncreaseIndex(sliceLine.endIndex, polygonPoints.Count);
+            while (i != sliceLine.startIndex)
+            {
+                points.Add(polygonPoints[i]);
+                i = IncreaseIndex(i, polygonPoints.Count);
+            }
+            secondShape = new PolygonShape(points);
+        }
+
+        return (firstShape, secondShape);
+    }
+
+    private Dictionary<Polygon, List<IntersectionInfo>> FindIntersectionWithHoles(Vector2 point1, Vector2 point2)
+    {
+        var result = new Dictionary<Polygon, List<IntersectionInfo>>();
+        var holes = _polygonManager.HolePolygons;
+        if (holes == null || holes.Count == 0)
+        {
+            return result;
+        }
+
+        foreach (var hole in holes)
+        {
+            var intersections = hole.GetIntersectionsByLine(point1, point2);
+            if (intersections == null || intersections.Count == 0)
+            {
+                continue;
+            }
+            result[hole] = intersections;
         }
 
         return result;
@@ -347,11 +514,15 @@ public class CutState : State
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.red;
-        foreach (var point in _cutPoints)
+        if (_currentPolygon != null && _cutPoints != null && _cutPoints.Count > 0)
         {
-            //Gizmos.DrawSphere(point, 0.01f);
+            Gizmos.color = Color.red;
+            foreach (var point in _cutPoints)
+            {
+                Gizmos.DrawSphere(_currentPolygon.ConvertLocalToGlobalPoint(point), 0.01f);
+            }
         }
+
     }
 
 }

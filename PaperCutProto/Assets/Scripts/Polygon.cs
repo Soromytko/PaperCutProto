@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(PolygonTriangulator))]
@@ -41,6 +42,17 @@ public class Polygon : MonoBehaviour
         return (Vector2)transform.position + localPoint;
     }
 
+    public Vector2 ConvertLocalPointToOtherPolygon(Vector2 localPoint, Polygon other)
+    {
+        Debug.Assert(other != null);
+        if (other == this)
+        {
+            return localPoint;
+        }
+        var point = ConvertLocalToGlobalPoint(localPoint);
+        return other.ConvertGlobalToLocalPoint(point);
+    }
+
     public Vector2 GetGlobalShapePoint(int index)
     {
         Debug.Assert(index >= 0 && index < _shape.Points.Count);
@@ -52,7 +64,7 @@ public class Polygon : MonoBehaviour
         return _shape.IsPointInside(ConvertGlobalToLocalPoint(globalPoint));
     }
 
-    public List<Intersection> GetIntersectionsByLine(Vector2 lineStartGlobalPoint, Vector2 lineEndGlobalPoint)
+    public List<PolygonShape.IntersectionInfo> GetIntersectionsByLine(Vector2 lineStartGlobalPoint, Vector2 lineEndGlobalPoint)
     {
         var firstLocalPoint = ConvertGlobalToLocalPoint(lineStartGlobalPoint);
         var secondLocalPoint = ConvertGlobalToLocalPoint(lineEndGlobalPoint);
