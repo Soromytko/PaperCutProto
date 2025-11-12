@@ -188,6 +188,14 @@ public class CutState : State
         return true;
     }
 
+    private void InsertIntersectionPoint(PolygonShape shape, ref Intersection intersection)
+    {
+        Debug.Assert(shape != null);
+        var points = new List<Vector2>(shape.Points);
+        points.Insert(intersection.StartEdgeIndex + 1, intersection.Point);
+        shape.SetPoints(points, false);
+    }
+
     private void AddPoint(Vector2 point)
     {
         Polygon polygon = GetCurrentPolygon();
@@ -231,7 +239,7 @@ public class CutState : State
         if (intersections != null && intersections.Count == 1)
         {
             var intersection = intersections[0];
-            draftPolygonShape.InsertIntersectionPoint(ref intersection);
+            InsertIntersectionPoint(draftPolygonShape, ref intersection);
             AddCutPoint(intersection.Point);
             _intersectionPointIndeces.Add(intersection.StartEdgeIndex + 1);
 
@@ -241,9 +249,6 @@ public class CutState : State
                 {
                     _intersectionPointIndeces[0]++;
                 }
-
-                List<Vector2> newVertices = new List<Vector2>();
-                newVertices.AddRange(_cutPoints);
 
                 List<Vector2> firstPolygonPoints = Slice(draftPolygonShape, _cutPoints, false);
                 List<Vector2> secondPolygonPoints = Slice(draftPolygonShape, _cutPoints, true);

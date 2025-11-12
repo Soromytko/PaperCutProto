@@ -6,6 +6,9 @@ public class Polygon : MonoBehaviour
 {
     public PolygonShape Shape => _shape;
 
+#if UNITY_EDITOR
+    [SerializeField] private bool _drawPoints = false;
+#endif
     [SerializeField] private PolygonShape _shape = new PolygonShape();
 
     PolygonTriangulator _polygonTriangulator;
@@ -222,13 +225,22 @@ public class Polygon : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        if (_shape?.Points.Count < 2)
+        if (_shape == null || _shape.Points == null || _shape?.Points.Count < 2)
         {
             return;
         }
 
         Vector2 pos = transform.position;
         Vector2 scale = transform.localScale;
+
+        if (_drawPoints)
+        {
+            Gizmos.color = Color.red;
+            foreach (var point in _shape.Points)
+            {
+                Gizmos.DrawSphere(transform.position + (Vector3)point, 0.01f);
+            }
+        }
     }
 
 }

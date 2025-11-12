@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -25,6 +24,8 @@ public class PolygonShape
 
     public IReadOnlyList<Vector2> Points => _points.AsReadOnly();
 
+    [Tooltip("Min distance between vertices for simplification")]
+    [SerializeField] private float _simplifyTolerance = 0.03f;
     [SerializeField] private List<Vector2> _points = new List<Vector2>();
 
     public PolygonShape()
@@ -37,25 +38,24 @@ public class PolygonShape
         SetPoints(points);
     }
 
-    public void SetPoints(IEnumerable<Vector2> newPoints)
+    public void SetPoints(IEnumerable<Vector2> newPoints, bool shouldSimplifyOutline = true)
     {
         if (newPoints == null)
         {
             throw new ArgumentNullException(nameof(newPoints));
         }
 
-        if (_points.SequenceEqual(newPoints))
+        var validatedPoints = new List<Vector2>(newPoints);
+
+        if (shouldSimplifyOutline)
         {
-            return;
+            validatedPoints = SimplifyOutline(validatedPoints);
         }
 
-        var validatedPoints = ValidatePointOrder(new List<Vector2>(newPoints));
+        validatedPoints = ValidatePointOrder(validatedPoints);
 
-        if (!_points.SequenceEqual(validatedPoints))
-        {
-            _points = validatedPoints;
-            PointsChanged?.Invoke();
-        }
+        _points = validatedPoints;
+        PointsChanged?.Invoke();
     }
 
     private List<Vector2> ValidatePointOrder(List<Vector2> points)
@@ -72,6 +72,42 @@ public class PolygonShape
         }
 
         return points;
+    }
+
+    private List<Vector2> SimplifyOutline(List<Vector2> outline)
+    {
+        Debug.Assert(outline != null && _simplifyTolerance > 0);
+        if (outline.Count <= 3)
+        {
+            return outline;
+        }
+
+        for (int i = 0; i < outline.Count; i++)
+        {
+            var firstPoint = outline[(i - 1 + outline.Count) % outline.Count];
+            var middlePoint = outline[i];
+            var firstDistance = Vector2.Distance(firstPoint, middlePoint);
+            if (firstDistance < _simplifyTolerance)
+            {
+                var secondPoint = outline[(i + 1) % outline.Count];
+                var secondDistance = Vector2.Distance(middlePoint, secondPoint);
+                if (secondDistance > _simplifyTolerance * 2)
+                {
+                    middlePoint += (secondPoint - middlePoint).normalized * _simplifyTolerance;
+                    outline[i] = middlePoint;
+                    continue;
+                }
+
+                outline.RemoveAt(i);
+                if (outline.Count == 3)
+                {
+                    break;
+                }
+                i--;
+            }
+        }
+
+        return outline;
     }
 
     // Shoelace formula (Gauss's area formula)
@@ -94,12 +130,6 @@ public class PolygonShape
         }
 
         return Mathf.Abs(area / 2);
-    }
-
-    public void InsertIntersectionPoint(ref Intersection intersection)
-    {
-        _points.Insert(intersection.StartEdgeIndex + 1, intersection.Point);
-        PointsChanged?.Invoke();
     }
 
     public bool IsPointInside(Vector2 localPoint)

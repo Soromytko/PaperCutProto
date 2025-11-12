@@ -1797,6 +1797,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 157748402}
     m_Modifications:
     - target: {fileID: 799615838639954040, guid: e4a7c4338eaea9c4685ffcfc2b87c850, type: 3}
+      propertyPath: _drawPoints
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 799615838639954040, guid: e4a7c4338eaea9c4685ffcfc2b87c850, type: 3}
       propertyPath: _points.Array.size
       value: 3
       objectReference: {fileID: 0}
