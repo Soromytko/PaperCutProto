@@ -330,6 +330,7 @@ GameObject:
   - component: {fileID: 688267946}
   - component: {fileID: 688267948}
   - component: {fileID: 688267947}
+  - component: {fileID: 688267949}
   m_Layer: 5
   m_Name: Sticky
   m_TagString: Untagged
@@ -395,6 +396,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 688267945}
   m_CullTransparentMesh: 1
+--- !u!114 &688267949
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 688267945}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.3137255}
+  m_EffectDistance: {x: 9.6, y: -19.7}
+  m_UseGraphicAlpha: 1
 --- !u!1 &704204063
 GameObject:
   m_ObjectHideFlags: 0
@@ -952,7 +968,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 3faaa77c085a03b4f9e0b132304fe0cf, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 3faaa77c085a03b4f9e0b132304fe0cf, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
@@ -1679,7 +1695,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 6178e474682cdf64eafe1b1755fa6a2c, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 6178e474682cdf64eafe1b1755fa6a2c, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
